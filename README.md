@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Kabadi Mitra
 
 A **collector-first** digital bridge between informal e-waste collection and
@@ -90,3 +91,6 @@ cp .env.example .env   # then fill in values
 ## License
 
 TODO: choose and add a license.
+=======
+# kabadimitra
+>>>>>>> 6cf372b650b23e5dafc86e53e290e51ea2de02ee
