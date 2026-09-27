@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "Kabadi Mitra",
+    "slug": "kabadi-mitra",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": ["**/*"],
+    "android": {
+      "package": "com.kabadimitra.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#14532d"
+      }
+    },
+    "plugins": ["expo-sqlite"]
+  }
+}

@@ -1,0 +1,30 @@
+# Render Blueprint for the FastAPI backend.
+# Deploy from the repo root; the service builds/runs inside `backend/`.
+services:
+  - type: web
+    name: kabadi-mitra-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_JWKS_URL
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: AI_PROVIDER
+        value: none
+      - key: AI_API_KEY
+        sync: false
+      - key: BACKEND_CORS_ORIGINS
+        value: https://kabadi-mitra-web.vercel.app

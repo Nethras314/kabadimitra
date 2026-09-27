@@ -1,0 +1,72 @@
+# ===== Environment / secrets =====
+.env
+.env.*
+!.env.example
+!.env.test
+
+# ===== Node / JavaScript / TypeScript =====
+node_modules/
+dist/
+build/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.vercel/
+.turbo/
+
+# ===== Python / FastAPI =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.tox/
+.coverage
+
+# ===== React Native / Expo =====
+.expo/
+.expo-shared/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+.metro-health-check*
+
+# ===== Native build artifacts =====
+ios/Pods/
+ios/build/
+android/build/
+android/app/build/
+*.apk
+*.aab
+*.ipa
+
+# ===== Database / local SQLite =====
+*.sqlite
+*.sqlite3
+*.db
+
+# ===== Tool-internal state =====
+.commandcode/
+
+# ===== IDE / OS =====
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
