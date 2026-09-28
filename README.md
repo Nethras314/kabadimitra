@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Kabadi Mitra
 
 A **collector-first** digital bridge between informal e-waste collection and
@@ -13,10 +12,10 @@ capture through to payment and earnings history.
 
 ## Core principle
 
-Informal collectors (pickers, *kabadiwalas*) are the primary users. The system
-must lower the barrier between them and authorized recyclers while keeping the
-**backend authoritative** and **AI assistive** (never a substitute for human
-confirmation on uncertain classifications).
+Informative collectors (pickers, *kabadiwalas*) are the primary users. The
+system must lower the barrier between them and authorized recyclers while
+keeping the **backend authoritative** and **AI assistive** (never a
+substitute for human confirmation on uncertain classifications).
 
 ## Architecture at a glance
 
@@ -91,6 +90,3 @@ cp .env.example .env   # then fill in values
 ## License
 
 TODO: choose and add a license.
-=======
-# kabadimitra
->>>>>>> 6cf372b650b23e5dafc86e53e290e51ea2de02ee
