@@ -136,7 +136,16 @@ the [RTM](requirement-traceability-matrix.md).
 
 | ID | Requirement | Actor | Priority | Depends on |
 | -- | ----------- | ----- | -------- | ---------- |
-| FR-001 | Support six primary roles: picker, kabadiwala, aggregator, recycler, dismantler, platform_admin. | Admin | P0 | — |
+| FR-001 | Support a nine-role model: collector, kabadiwala, aggregator, recycler, dismantler, support, operations_admin, data_ai_admin, super_admin. | Admin | P0 | — |
+
+> **Role-model drift (verified)**: the requirements originally specified six roles
+> (`picker`, `kabadiwala`, `aggregator`, `recycler`, `dismantler`,
+> `platform_admin`). Migration `0019_roles.sql` renames `picker → collector` and
+> `platform_admin → super_admin`, and adds `support`, `operations_admin`,
+> `data_ai_admin` — giving **nine** roles. The layered `app/models/role.py`
+> implements all nine with a hierarchy. The **mounted** HTTP routers still use the
+> legacy six codes. This is a partial/in-transition state, tracked in the RTM as
+> FR-001 **PARTIAL**.
 | FR-002 | Enforce role-based access control so a user can act only within granted roles. | All | P0 | FR-001 |
 | FR-003 | Enforce organization-level data isolation so a scoped user sees only their organization's data. | All | P0 | FR-001 |
 | FR-004 | Allow a user to hold one or more roles via a user-role mapping. | Admin | P0 | FR-001 |

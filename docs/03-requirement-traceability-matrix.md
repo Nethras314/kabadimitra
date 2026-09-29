@@ -49,7 +49,7 @@
 
 | Requirement ID | Requirement Type | Source | Requirement | User/Actor | Priority | Module | Functional Dependency | API | Database Entity | UI Screen | Test Case | Acceptance Criteria | Evidence | Status | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| FR-001 | Functional | Legacy FR-USER-01 | Six primary roles seeded | Admin | P0 | Identity & Access | — | API-005 | DB-003 | UI-017 | TC-002 | AT-001 | `0014_seed_roles.sql`, `test_auth.py` | Implemented | |
+| FR-001 | Functional | Legacy FR-USER-01 | Nine-role model seeded | Admin | P0 | Identity & Access | — | API-005 | DB-003 | UI-017 | TC-002 | AT-001 | `0014_seed_roles.sql`, `0019_roles.sql`, `models/role.py` | PARTIAL | 9 roles in migrations/layered model; mounted routers still use 6 legacy codes |
 | FR-002 | Functional | Legacy FR-USER-02 | RBAC enforced | All | P0 | Identity & Access | FR-001 | API-005, API-017..019, API-021 | DB-004 | — | TC-002 | AT-002 | `dependencies.py:require_role`, `test_auth.py` | Implemented | `require_role` wired |
 | FR-003 | Functional | Legacy FR-USER-02 | Organization-level isolation | All | P0 | Identity & Access | FR-001, FR-004 | — | DB-002, DB-004 | — | TC-003 | AT-003 | `dependencies.py:org_scope`, `test_helpers.py` | In progress | helper tested but **not wired** to endpoints |
 | FR-004 | Functional | Legacy FR-USER-03 | Multi-role user | Admin | P0 | Identity & Access | FR-001 | API-003 | DB-004 | — | TC-002 | AT-004 | `auth.py:_load_roles`, `test_auth.py` | Implemented | |
@@ -92,7 +92,7 @@
 | FR-041 | Functional | Legacy FR-SYNC-01 | SQLite local DB | Collector | P0 | Offline/Sync | — | — | mobile `db/schema.ts` | UI-013 | TC-017 | AT-018 | `mobile/src/db/schema.ts` | In progress | schema declared; adapter unwired |
 | FR-042 | Functional | Legacy FR-SYNC-02 | Offline capture scope | Collector | P0 | Offline/Sync | FR-041 | API-031 | mobile `sync_queue` | UI-003, UI-013 | TC-016, TC-017 | AT-018 | `mobile/src/sync/`, `db/` | In progress | screens pending |
 | FR-043 | Functional | Legacy FR-SYNC-03 | Backend authoritative | System | P0 | Offline/Sync | — | — | — | — | TC-008 | AT-018 | `sync.py`, ADR-0006 | Implemented | |
-| FR-044 | Functional | Legacy FR-SYNC-04 | Idempotency keys | System | P0 | Offline/Sync | FR-043 | API-031 | DB-040 | UI-013 | TC-007, TC-008 | AT-018 | `idempotency.py`, `sync.py`, `test_sync.py` | Implemented | ⚠ mobile camelCase mismatch (ADR-0029) |
+| FR-044 | Functional | Legacy FR-SYNC-04 | Idempotency keys | System | P0 | Offline/Sync | FR-043 | API-031 | DB-040 | UI-013 | TC-007, TC-008 | AT-018 | `idempotency.py`, `sync.py`, `test_sync.py` | Implemented | snake_case on mobile (ADR-0029 resolved) |
 | FR-045 | Functional | Legacy FR-MEDIA-01 | No large images in PG | System | P0 | Media | — | — | DB-022 | — | TC-004 | AT-009 | `0006_lots.sql` (no bytea) | Implemented | |
 | FR-046 | Functional | Legacy FR-MEDIA-02 | Collector → Cloudinary → metadata | Collector | P0 | Media | FR-045 | API-014 | DB-022 | UI-003 | TC-006 | AT-009 | `media.py:upload_params` | In progress | 🔎 signed upload untested (no creds) |
 | FR-047 | Functional | Legacy FR-GEO-01 | PostGIS | System | P0 | Geospatial | — | — | PostGIS ext | — | TC-009 | AT-019 | `0001_extensions.sql` | Implemented | |
@@ -126,7 +126,7 @@
 | TR-008 | Technical | ADR-0018 | AI pluggable provider | System | P0 | Platform | FR-012 | API-011 | DB-035 | — | TC-005 | AT-010 | `ai/provider.py` | Implemented | NullProvider only |
 | TR-009 | Technical | ADR-0006 | Backend authoritative | System | P0 | Platform | FR-043 | — | — | — | TC-008 | AT-018 | `sync.py` | Implemented | |
 | TR-010 | Technical | ADR-0011 | UUID primary keys | System | P0 | Data | FR-044 | — | all tables | — | TC-008 | — | migrations (uuid defaults) | Implemented | |
-| TR-011 | Technical | ADR-0029 | snake_case wire contract | System | P0 | Integration | FR-044 | API-031 | — | — | TC-017 | AT-018 | `offline-sync.md` | In progress | ⚠ mobile camelCase mismatch |
+| TR-011 | Technical | ADR-0029 | snake_case wire contract | System | P0 | Integration | FR-044 | API-031 | — | — | TC-017 | AT-018 | `offline-sync.md`, `mobile/src/types/index.ts` | Implemented | snake_case end-to-end |
 | TR-012 | Technical | ADR-0016 | psycopg3 async, no ORM | System | P0 | Data | — | — | — | — | TC-003 | — | `db.py` | Implemented | |
 | TR-013 | Technical | ADR-0010 | SQL migrations + Node runner | System | P0 | Data | — | — | DB-041 | — | — | — | `migrations/run.js` | Implemented | |
 | TR-014 | Technical | ADR-0015 | Supabase Auth IdP | System | P0 | Security | FR-053 | — | DB-002 | UI-001 | TC-002 | AT-002 | `auth.py` | Implemented | |

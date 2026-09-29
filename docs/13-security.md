@@ -40,6 +40,13 @@ Nine roles (`app/models/role.py`):
 `collector`, `kabadiwala`, `aggregator`, `recycler`, `dismantler`,
 `support`, `operations_admin`, `data_ai_admin`, `super_admin`.
 
+> **In-transition note (verified)**: the **mounted** HTTP routers
+> (`app/routers/*`) still enforce the legacy six codes (`picker`, `kabadiwala`,
+> `aggregator`, `recycler`, `dismantler`, `platform_admin`). The nine-role model
+> with hierarchy lives in `app/models/role.py` / `app/core/security.py` and is
+> unit-tested but not yet wired into the mounted app. See
+> [04-system-architecture.md](04-system-architecture.md).
+
 ### Hierarchy
 
 ```mermaid
