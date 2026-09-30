@@ -5,7 +5,7 @@
 > [Requirement Traceability Matrix](requirement-traceability-matrix.md).
 >
 > **Status**: the schema below is **implemented** in `backend/migrations/*.sql`
-> (15 files, 41 tables) and verified against the live Supabase project. This
+> (19 files, 41 tables). This
 > document is the design-of-record that the migrations realize. **No migration
 > SQL is created or modified in this phase** — the existing migrations are
 > preserved as-is, and any schema change proposed below is recorded as a
@@ -196,14 +196,14 @@ duplicate direct mutations.
 ### 4.6 Migration strategy
 
 - **Versioned, forward-only**: `backend/migrations/*.sql`, applied in filename
-  order (`0001…0015`), each wrapped in a transaction by `run.js`.
+  order (`0001…0019`), each wrapped in a transaction by `run.js`.
 - **Tracking**: `schema_migrations` records each applied `version`.
 - **Idempotent DDL**: `CREATE … IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`,
   and `ON CONFLICT … DO NOTHING` for seeds.
 - **Rules**: never edit an applied migration — apply an additive new migration;
   keep DDL + seed separated; run out-of-band via `node backend/migrations/run.js`
   (reads `DATABASE_URL`) or the Supabase SQL editor.
-- **Preservation**: the 15 existing migration files are **preserved unchanged**
+- **Preservation**: the 19 existing migration files are **preserved unchanged**
   (non-destructive requirement). PostGIS is enabled by `0001_extensions.sql`.
 
 ### 4.7 PostGIS usage
@@ -567,7 +567,7 @@ and RTM requirement IDs. DB-xxx IDs match the Phase 2 catalog.
 
 | Table | Rows | Notes |
 | ----- | ---- | ----- |
-| roles | 6 | picker, kabadiwala, aggregator, recycler, dismantler, platform_admin |
+| roles | 9 | collector, kabadiwala, aggregator, recycler, dismantler, super_admin, support, operations_admin, data_ai_admin (0014 seeds 6; 0019 renames 2 + adds 3) |
 | collector_categories | 14 | the approved simple labels |
 | material_categories | 22 | 8 equipment + 14 recovered_material |
 | material_subcategories | 17 | representative subset |
@@ -644,6 +644,10 @@ The following files are the reviewed implementation of this design and are
 0013_ops.sql           — audit_events, notifications, sync_operations
 0014_seed_roles.sql    — 6 roles
 0015_seed_taxonomy.sql — reference taxonomy
+0016_ai_enhancements.sql — ai_decisions: provider/model_name/model_version/alternatives
+0017_pricing_matching.sql — price_observations unit+confidence; recycler_organizations pickup_available
+0018_transaction_handover_idempotency.sql — handover_records idempotency_key
+0019_roles.sql — role renames + 3 new roles (6 → 9)
 ```
 
 **No new migration SQL is written in this phase.** Schema changes (open items in

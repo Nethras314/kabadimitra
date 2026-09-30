@@ -39,7 +39,7 @@ backend/
 business rules.
 
 > **Migration note**: the current `app/` uses a flatter layout (domain logic
-> co-located in `app/routers/`). This design is the target; the existing 14
+> co-located in `app/routers/`). This design is the target; the existing 13
 > routers are preserved and will be migrated into the layered structure module
 > by module in later phases. The foundation (`app/foundation.py`) demonstrates
 > the target pattern end-to-end on the health domain.
