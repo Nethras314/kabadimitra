@@ -77,12 +77,14 @@ export function Tile({
   onPress,
   tone = 'neutral',
   disabled,
+  testID,
 }: {
   icon: string;
   label: string;
   onPress?: () => void;
   tone?: 'neutral' | 'good' | 'warn' | 'bad';
   disabled?: boolean;
+  testID?: string;
 }) {
   const bg =
     tone === 'good' ? theme.greenSoft
@@ -99,6 +101,7 @@ export function Tile({
     <Pressable
       onPress={onPress}
       disabled={disabled}
+      testID={testID}
       accessibilityRole="button"
       accessibilityLabel={label}
       style={({ pressed }) => [
@@ -121,12 +124,14 @@ export function BigButton({
   tone = 'primary',
   disabled,
   busy,
+  testID,
 }: {
   title: string;
   onPress?: () => void;
   tone?: 'primary' | 'ghost' | 'danger';
   disabled?: boolean;
   busy?: boolean;
+  testID?: string;
 }) {
   const bg = tone === 'primary' ? theme.green : tone === 'danger' ? theme.red : 'transparent';
   const ink = tone === 'ghost' ? theme.green : '#FFFFFF';
@@ -134,6 +139,7 @@ export function BigButton({
     <Pressable
       onPress={onPress}
       disabled={disabled || busy}
+      testID={testID}
       accessibilityRole="button"
       accessibilityLabel={title}
       style={({ pressed }) => [
@@ -154,12 +160,20 @@ export function BigInput({
   placeholder,
   keyboardType = 'default',
   suffix,
+  secureTextEntry,
+  autoCapitalize,
+  autoComplete,
+  testID,
 }: {
   value: string;
   onChangeText: (v: string) => void;
   placeholder?: string;
-  keyboardType?: 'default' | 'numeric' | 'decimal-pad';
+  keyboardType?: 'default' | 'numeric' | 'decimal-pad' | 'email-address';
   suffix?: string;
+  secureTextEntry?: boolean;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  autoComplete?: 'email' | 'password' | 'name' | 'tel' | 'off';
+  testID?: string;
 }) {
   return (
     <View style={styles.inputWrap}>
@@ -169,6 +183,10 @@ export function BigInput({
         placeholder={placeholder}
         placeholderTextColor={theme.inkSoft}
         keyboardType={keyboardType}
+        secureTextEntry={secureTextEntry}
+        autoCapitalize={autoCapitalize}
+        autoComplete={autoComplete}
+        testID={testID}
         style={styles.input}
         accessibilityLabel={placeholder}
       />
@@ -177,8 +195,8 @@ export function BigInput({
   );
 }
 
-export function Card({ children }: { children: React.ReactNode }) {
-  return <View style={styles.card}>{children}</View>;
+export function Card({ children, testID }: { children: React.ReactNode; testID?: string }) {
+  return <View style={styles.card} testID={testID}>{children}</View>;
 }
 
 export function Row({

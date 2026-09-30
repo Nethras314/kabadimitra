@@ -45,7 +45,7 @@ export function EarningsScreen({
       {offline ? <Banner tone="warn" text={t(locale, 'prices_offline')} /> : null}
 
       {summary ? (
-        <Card>
+        <Card testID="earnings-summary">
           <Row
             icon="rupee"
             title={t(locale, 'earnings_earned')}
@@ -67,7 +67,7 @@ export function EarningsScreen({
       ) : null}
 
       {items.length === 0 ? (
-        <Card>
+        <Card testID="earnings-empty">
           <Text style={styles.empty}>{t(locale, 'earnings_nothing')}</Text>
         </Card>
       ) : (

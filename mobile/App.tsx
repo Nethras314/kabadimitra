@@ -2,8 +2,9 @@
 // visible so a collector knows whether what they see is current.
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 
+import { authConfigured, getCurrentUser, loadLocale, onAuthStateChange, saveLocale, signOut, type AuthUser } from './src/auth/session';
 import { ApiClient, API_BASE, PriceBoardRow, SafetyTopic } from './src/api/client';
 import { SqliteStore } from './src/db/sqliteStore';
 import { ReachabilityConnectivity } from './src/lib/connectivity';
@@ -13,6 +14,7 @@ import { CaptureScreen } from './src/ui/CaptureScreen';
 import { EarningsScreen } from './src/ui/EarningsScreen';
 import { PriceBoardScreen } from './src/ui/PriceBoardScreen';
 import { SafetyScreen } from './src/ui/SafetyScreen';
+import { SignInScreen } from './src/ui/SignInScreen';
 import { BigButton, theme } from './src/ui/components';
 
 type Tab = 'capture' | 'prices' | 'safety' | 'earnings';
@@ -28,12 +30,19 @@ const CACHE_BOARD = 'cache:price-board';
 const CACHE_SAFETY = 'cache:safety';
 
 export default function App() {
-  const [locale, setLocale] = useState<Locale>('hi');
+  // English is the default so the first-run experience and any automated test
+  // sees a known script; the collector can switch language from the top bar.
+  const [locale, setLocale] = useState<Locale>('en');
   const [tab, setTab] = useState<Tab>('capture');
   const [online, setOnline] = useState<boolean | null>(null);
   const [pending, setPending] = useState(0);
   const [board, setBoard] = useState<PriceBoardRow[] | null>(null);
   const [safety, setSafety] = useState<SafetyTopic[] | null>(null);
+
+  // Auth state. `undefined` means "still resolving", which must render neither
+  // the sign-in form nor the app, or a returning user sees a login flash.
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [authReady, setAuthReady] = useState(false);
 
   const { api, sync, store } = useMemo(() => {
     const s = new SqliteStore();
@@ -43,6 +52,35 @@ export default function App() {
     const connectivity = new ReachabilityConnectivity(`${API_BASE}/health`, 4000);
     const service = new SyncService(s, client, connectivity);
     return { api: client, sync: service, store: s };
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      // Restore the language the collector last chose, before first paint of
+      // any content, so the app does not flash the default language.
+      const saved = await loadLocale();
+      if (saved && (SUPPORTED_LOCALES as readonly string[]).includes(saved)) {
+        setLocale(saved as Locale);
+      }
+
+      if (!authConfigured) {
+        setAuthReady(true);
+        return;
+      }
+
+      try {
+        setUser(await getCurrentUser());
+      } catch {
+        setUser(null);
+      } finally {
+        setAuthReady(true);
+      }
+    })();
+
+    // Sign-out and token-revocation from another device must drop the app back
+    // to the sign-in gate rather than leaving a shell that silently 401s.
+    const unsubscribe = onAuthStateChange((next) => setUser(next));
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -103,31 +141,82 @@ export default function App() {
 
   const cycleLocale = () => {
     const i = SUPPORTED_LOCALES.indexOf(locale);
-    setLocale(SUPPORTED_LOCALES[(i + 1) % SUPPORTED_LOCALES.length]);
+    const next = SUPPORTED_LOCALES[(i + 1) % SUPPORTED_LOCALES.length];
+    setLocale(next);
+    void saveLocale(next);
   };
+
+  const handleSignOut = useCallback(async () => {
+    await signOut();
+    setUser(null);
+  }, []);
+
+  if (!authReady) {
+    return (
+      <SafeAreaView style={styles.root}>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.splash}>
+          <ActivityIndicator size="large" color={theme.green} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!user) {
+    return (
+      <SafeAreaView style={styles.root}>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.topBar}>
+          <Pressable
+            onPress={cycleLocale}
+            style={styles.localeBtn}
+            accessibilityRole="button"
+            testID="locale-toggle"
+          >
+            <Text style={styles.localeText}>{LOCALE_LABELS[locale]}</Text>
+          </Pressable>
+        </View>
+        <SignInScreen locale={locale} />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.root}>
       <StatusBar barStyle="dark-content" />
 
       <View style={styles.topBar}>
-        <Pressable onPress={cycleLocale} style={styles.localeBtn} accessibilityRole="button">
+        <Pressable
+          onPress={cycleLocale}
+          style={styles.localeBtn}
+          accessibilityRole="button"
+          testID="locale-toggle"
+        >
           <Text style={styles.localeText}>{LOCALE_LABELS[locale]}</Text>
         </Pressable>
         <View style={{ flex: 1 }} />
-        <View style={styles.statusPill}>
+        <View style={styles.statusPill} testID="sync-status">
           <Text style={styles.statusText}>
             {online === null ? '…' : online ? t(locale, 'sync_online') : t(locale, 'sync_offline')}
           </Text>
         </View>
+        <Pressable
+          onPress={handleSignOut}
+          style={styles.signOutBtn}
+          accessibilityRole="button"
+          accessibilityLabel={t(locale, 'auth_sign_out')}
+          testID="auth-sign-out"
+        >
+          <Text style={styles.signOutText}>{t(locale, 'auth_sign_out')}</Text>
+        </Pressable>
       </View>
 
       {pending > 0 ? (
-        <View style={styles.pendingBar}>
+        <View style={styles.pendingBar} testID="sync-pending-bar">
           <Text style={styles.pendingText}>
             {t(locale, 'sync_pending')}: {pending}
           </Text>
-          <BigButton title={t(locale, 'sync_now')} onPress={flushNow} />
+          <BigButton title={t(locale, 'sync_now')} onPress={flushNow} testID="sync-now" />
         </View>
       ) : null}
 
@@ -156,6 +245,7 @@ export default function App() {
             style={[styles.tab, tab === x.key && styles.tabActive]}
             accessibilityRole="tab"
             accessibilityLabel={t(locale, `tab_${x.key}`)}
+            testID={`tab-${x.key}`}
           >
             <Text style={styles.tabGlyph}>{x.glyph}</Text>
             <Text style={[styles.tabLabel, tab === x.key && styles.tabLabelActive]}>
@@ -170,6 +260,16 @@ export default function App() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: theme.bg },
+  splash: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  signOutBtn: {
+    marginLeft: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: theme.line,
+  },
+  signOutText: { fontSize: 14, fontWeight: '700', color: theme.inkSoft },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -51,7 +51,7 @@ export function SafetyScreen({
         const dont = topic.pictograms.find((p) => p.kind === 'dont');
         const doIcon = topic.pictograms.find((p) => p.kind === 'do');
         return (
-          <Card key={topic.id}>
+          <Card key={topic.id} testID={`safety-topic-${topic.code}`}>
             <Text style={[styles.title, tone(topic.severity) === 'bad' && { color: theme.red }]}>
               {topic.title}
             </Text>
@@ -73,7 +73,7 @@ export function SafetyScreen({
             </View>
 
             {isOpen ? (
-              <View style={styles.detail}>
+              <View style={styles.detail} testID={`safety-detail-${topic.code}`}>
                 {topic.dont_text ? (
                   <View style={styles.dontBox}>
                     <Text style={styles.detailHead}>{t(locale, 'safety_dont')}</Text>
@@ -87,13 +87,18 @@ export function SafetyScreen({
                   </View>
                 ) : null}
                 {topic.audio_url ? (
-                  <BigButton title={t(locale, 'safety_play')} tone="ghost" />
+                  <BigButton
+                    title={t(locale, 'safety_play')}
+                    tone="ghost"
+                    testID={`safety-play-${topic.code}`}
+                  />
                 ) : null}
               </View>
             ) : (
               <BigButton
                 title={t(locale, 'common_ok')}
                 tone="ghost"
+                testID={`safety-expand-${topic.code}`}
                 onPress={() => setOpen(isOpen ? null : topic.id)}
               />
             )}

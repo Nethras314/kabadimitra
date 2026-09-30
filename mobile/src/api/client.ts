@@ -4,6 +4,7 @@
 // Reads (price board, safety, estimates, earnings) are cached by the caller so
 // the app still works with no connectivity.
 
+import { getAccessToken, refreshAccessToken } from '../auth/session';
 import { SyncOperation, SyncResponse } from '../types';
 
 export const API_BASE = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000';
@@ -85,14 +86,50 @@ export interface CollectorCategory {
   sort_order: number;
 }
 
+export class ApiError extends Error {
+  constructor(
+    readonly status: number,
+    readonly path: string,
+    message?: string,
+  ) {
+    super(message ?? `${path} failed: ${status}`);
+    this.name = 'ApiError';
+  }
+}
+
+/**
+ * The token seam the API client depends on. Injected rather than imported
+ * directly so tests can exercise the auth headers without a live Supabase
+ * project. The production default is the real session module — it must never
+ * degrade to a null-returning stub, because an unauthenticated request is
+ * indistinguishable from an offline one at the UI layer.
+ */
+export interface AuthTokenSource {
+  getAccessToken(): Promise<string | null>;
+  refreshAccessToken(): Promise<string | null>;
+}
+
+export const sessionTokenSource: AuthTokenSource = { getAccessToken, refreshAccessToken };
+
 export class ApiClient implements SyncApi {
   constructor(
     private readonly baseUrl: string = API_BASE,
-    private readonly getToken: () => string | null = () => null,
+    private readonly auth: AuthTokenSource = sessionTokenSource,
   ) {}
 
-  private async request<T>(path: string, init?: RequestInit): Promise<T> {
-    const token = this.getToken();
+  /**
+   * Every request carries a bearer token. The backend rejects unauthenticated
+   * reads with 401, so omitting the header is not a graceful degradation — it
+   * turns every screen into a permanent offline state.
+   *
+   * A 401 triggers at most one forced refresh and retry: the token may simply
+   * have expired between the proactive refresh and this call. The retry is only
+   * attempted when the refresh actually produced a new token — replaying the
+   * request with the same rejected credentials would be a wasted round trip
+   * and, against a revoked session, an unbounded hammer on the API.
+   */
+  private async request<T>(path: string, init?: RequestInit, retried = false): Promise<T> {
+    const token = await this.auth.getAccessToken();
     const res = await fetch(`${this.baseUrl}${path}`, {
       ...init,
       headers: {
@@ -101,7 +138,13 @@ export class ApiClient implements SyncApi {
         ...(init?.headers ?? {}),
       },
     });
-    if (!res.ok) throw new Error(`${path} failed: ${res.status}`);
+
+    if (res.status === 401 && !retried) {
+      const fresh = await this.auth.refreshAccessToken();
+      if (fresh) return this.request<T>(path, init, true);
+    }
+
+    if (!res.ok) throw new ApiError(res.status, path);
     return (await res.json()) as T;
   }
 

@@ -6,10 +6,11 @@
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
-    "test": "tsx --test src/lib/idempotency.test.ts src/sync/queue.test.ts src/sync/retry.test.ts src/sync/service.test.ts src/db/store.test.ts src/i18n/locales.test.ts",
+    "test": "tsx --test src/lib/idempotency.test.ts src/sync/queue.test.ts src/sync/retry.test.ts src/sync/service.test.ts src/db/store.test.ts src/i18n/locales.test.ts src/api/client.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "2.2.0",
     "@supabase/supabase-js": "^2.45.0",
     "babel-preset-expo": "^57.0.13",
     "expo": "~57.0.0",

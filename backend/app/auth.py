@@ -1,10 +1,11 @@
 """Authentication: verify Supabase JWTs and resolve the request principal.
 
 Supabase Auth is the identity provider. The backend verifies the access token
-against the project's JWKS, then maps `sub` to our own `users` table (creating
-a minimal row on first login).
+against the project's JWKS, then maps `sub` to our own `users` table (creating a
+minimal row on first login).
 """
 
+import asyncio
 import time
 from dataclasses import dataclass, field
 
@@ -16,9 +17,16 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from .config import settings
 from .db import get_db
 
+# Cache of the project's JWKS plus the fetch timestamp.
 _JWKS: dict | None = None
 _JWKS_FETCHED_AT: float = 0.0
 _JWKS_TTL_SECONDS: float = 3600.0
+# In-flight fetch guard: concurrent cold requests await ONE fetch instead of
+# each blocking on its own network round trip.
+_JWKS_TASK: asyncio.Task | None = None
+
+# Shared async client. Creating one per call is expensive and leaks sockets.
+_HTTP = httpx.AsyncClient(timeout=10.0)
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -35,19 +43,54 @@ class Principal:
         return bool(set(codes) & set(self.roles))
 
 
+async def _fetch_jwks_async() -> dict:
+    """Fetch and cache the JWKS without blocking the event loop.
+
+    Uses httpx.AsyncClient: the previous synchronous `httpx.get` stalled the
+    whole event loop on every cold request, which surfaced to browsers as
+    intermittent "Failed to fetch" on the first load.
+    """
+    global _JWKS, _JWKS_FETCHED_AT, _JWKS_TASK
+
+    now = time.time()
+    if _JWKS is not None and (now - _JWKS_FETCHED_AT) <= _JWKS_TTL_SECONDS:
+        return _JWKS
+
+    # Single-flight: the first caller fetches, the rest await the same task.
+    if _JWKS_TASK is None or _JWKS_TASK.done():
+        _JWKS_TASK = asyncio.create_task(_do_fetch())
+    try:
+        return await asyncio.shield(_JWKS_TASK)
+    finally:
+        # Clear the task reference once it has been consumed so a later refresh
+        # is not pinned to a finished task.
+        if _JWKS_TASK is not None and _JWKS_TASK.done():
+            _JWKS_TASK = None
+
+
+async def _do_fetch() -> dict:
+    global _JWKS, _JWKS_FETCHED_AT
+    resp = await _HTTP.get(settings.supabase_jwks_url)
+    resp.raise_for_status()
+    _JWKS = resp.json()
+    _JWKS_FETCHED_AT = time.time()
+    return _JWKS
+
+
 def _fetch_jwks() -> dict:
+    """Synchronous accessor for non-async callers (e.g. unit tests)."""
     global _JWKS, _JWKS_FETCHED_AT
     now = time.time()
     if _JWKS is None or (now - _JWKS_FETCHED_AT) > _JWKS_TTL_SECONDS:
         resp = httpx.get(settings.supabase_jwks_url, timeout=10.0)
         resp.raise_for_status()
         _JWKS = resp.json()
-        _JWKS_FETCHED_AT = now
+        _JWKS_FETCHED_AT = time.time()
     return _JWKS
 
 
-def verify_token(token: str) -> dict:
-    jwks = _fetch_jwks()
+def _decode_with_jwks(token: str, jwks: dict) -> dict:
+    """Shared JWT verification for both the sync and async entry points."""
     try:
         header = jwt.get_unverified_header(token)
     except jwt.PyJWTError as exc:
@@ -105,12 +148,27 @@ def verify_token(token: str) -> dict:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token") from exc
 
 
+async def verify_token_async(token: str) -> dict:
+    """Verify a token without blocking the event loop (used by every request)."""
+    return _decode_with_jwks(token, await _fetch_jwks_async())
+
+
+def verify_token(token: str) -> dict:
+    """Synchronous verifier, for scripts and tests outside the request path."""
+    return _decode_with_jwks(token, _fetch_jwks())
+
+
 async def get_current_user(
     creds: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ) -> dict:
     if creds is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Not authenticated")
-    return verify_token(creds.credentials)
+    return await verify_token_async(creds.credentials)
+
+
+async def aclose_http() -> None:
+    """Close the shared HTTP client on application shutdown."""
+    await _HTTP.aclose()
 
 
 async def get_or_create_user(conn, sub: str, email: str | None, phone: str | None) -> dict:

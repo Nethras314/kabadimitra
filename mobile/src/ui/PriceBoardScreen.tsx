@@ -96,10 +96,11 @@ export function PriceBoardScreen({
             placeholder={t(locale, 'capture_weight')}
             keyboardType="decimal-pad"
             suffix="kg"
+            testID="prices-weight-input"
           />
-          <BigButton title={t(locale, 'estimate_title')} onPress={calc} />
+          <BigButton title={t(locale, 'estimate_title')} onPress={calc} testID="prices-estimate" />
           {estimate ? (
-            <View style={styles.estimateBox}>
+            <View style={styles.estimateBox} testID="prices-estimate-result">
               <Text style={styles.estimateHead}>{t(locale, 'estimate_title')}</Text>
               <Row
                 icon="trending_down"
@@ -120,7 +121,7 @@ export function PriceBoardScreen({
               <Text style={styles.disclaimer}>{t(locale, 'estimate_note')}</Text>
             </View>
           ) : null}
-          <BigButton title={t(locale, 'common_back')} tone="ghost" onPress={() => {
+          <BigButton title={t(locale, 'common_back')} tone="ghost" testID="prices-back" onPress={() => {
             setPicked(null);
             setEstimate(null);
             setWeight('');
@@ -137,6 +138,8 @@ export function PriceBoardScreen({
                 style={styles.boardName}
                 onPress={() => setPicked(b)}
                 accessibilityRole="button"
+                accessibilityLabel={MATERIAL_LABELS[locale]?.[b.code] ?? b.name}
+                testID={`prices-row-${b.code}`}
               >
                 {MATERIAL_LABELS[locale]?.[b.code] ?? b.name}
               </Text>

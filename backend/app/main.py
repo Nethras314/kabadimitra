@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .db import create_pool
+from .auth import _fetch_jwks_async, aclose_http
 from .idempotency import IdempotencyMiddleware
 from .rate_limit import RateLimitMiddleware
 from .routers import (
@@ -39,8 +40,18 @@ async def lifespan(app: FastAPI):
     pool = create_pool()
     await pool.open()
     app.state.pool = pool
+
+    # Warm the JWKS cache so the first authenticated request does not pay the
+    # fetch latency. Failures are non-fatal: the first request will retry.
+    try:
+        await _fetch_jwks_async()
+    except Exception:  # noqa: BLE001 - never block startup on an IdP outage
+        pass
+
     yield
+
     await pool.close()
+    await aclose_http()
 
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)

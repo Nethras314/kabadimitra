@@ -177,7 +177,7 @@ export function CaptureScreen({
         {!permission?.granted ? (
           <View style={styles.permBox}>
             <ScreenTitle text={t(locale, 'capture_photo')} />
-            <BigButton title={t(locale, 'capture_photo')} onPress={begin} />
+            <BigButton title={t(locale, 'capture_photo')} onPress={begin} testID="capture-request-permission" />
           </View>
         ) : (
           <>
@@ -193,6 +193,7 @@ export function CaptureScreen({
                 style={styles.flipBtn}
                 onPress={() => setFacing(facing === 'back' ? 'front' : 'back')}
                 accessibilityRole="button"
+                testID="capture-flip-camera"
               >
                 <Glyph name="camera" size={28} />
               </Pressable>
@@ -207,11 +208,14 @@ export function CaptureScreen({
                 }}
                 accessibilityRole="button"
                 accessibilityLabel={t(locale, 'capture_photo')}
+                testID="capture-shutter"
               />
               <Pressable
                 style={styles.nextBtn}
                 onPress={() => setStage('category')}
                 accessibilityRole="button"
+                accessibilityLabel={t(locale, 'capture_next')}
+                testID="capture-next"
               >
                 <Text style={styles.nextText}>{t(locale, 'capture_next')}</Text>
               </Pressable>
@@ -235,6 +239,8 @@ export function CaptureScreen({
               <Pressable
                 onPress={() => pickCategory(code)}
                 accessibilityRole="button"
+                accessibilityLabel={MATERIAL_LABELS[locale][code]}
+                testID={`capture-category-${code}`}
                 style={styles.catRow}
               >
                 <Text style={styles.catIcon}>{CATEGORY_GLYPH[code] ?? '\u2022'}</Text>
@@ -258,25 +264,27 @@ export function CaptureScreen({
             placeholder={t(locale, 'capture_weight')}
             keyboardType="decimal-pad"
             suffix="kg"
+            testID="capture-weight-input"
           />
-          <BigButton title={t(locale, 'capture_save')} onPress={save} busy={busy} />
+          <BigButton title={t(locale, 'capture_save')} onPress={save} busy={busy} testID="capture-save" />
           <BigButton
             title={t(locale, 'common_cancel')}
             tone="ghost"
             onPress={() => setStage('category')}
+            testID="capture-cancel"
           />
         </View>
       ) : null}
 
       {stage === 'done' ? (
-        <Card>
+        <Card testID="capture-done">
           <Text style={styles.doneGlyph}>{'\u2705'}</Text>
           <Text style={styles.doneText}>{t(locale, 'capture_saved')}</Text>
           {photoUri ? (
-            <BigButton title="AI: check material" tone="ghost" onPress={askAi} busy={busy} />
+            <BigButton title="AI: check material" tone="ghost" onPress={askAi} busy={busy} testID="capture-ai-check" />
           ) : null}
-          {aiNote ? <Text style={styles.aiNote}>{aiNote}</Text> : null}
-          <BigButton title={t(locale, 'capture_add_item')} onPress={reset} />
+          {aiNote ? <Text style={styles.aiNote} testID="capture-ai-note">{aiNote}</Text> : null}
+          <BigButton title={t(locale, 'capture_add_item')} onPress={reset} testID="capture-add-another" />
         </Card>
       ) : null}
     </ScrollView>

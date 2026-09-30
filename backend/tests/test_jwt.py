@@ -6,6 +6,7 @@ ES256 project `verify_token` raised `InvalidKeyError: Not an RSA key` and EVERY
 authenticated endpoint returned 500. These tests pin both key types.
 """
 
+import asyncio
 import time
 
 import jwt
@@ -13,11 +14,15 @@ import pytest
 from cryptography.hazmat.primitives.asymmetric import ec, rsa
 
 from app import auth
-from app.auth import verify_token
+from app.auth import verify_token, verify_token_async
 from fastapi import HTTPException
 
 ISSUER = "https://example.supabase.co"
 AUDIENCE = "authenticated"
+
+
+def run(coro):
+    return asyncio.run(coro)
 
 
 def _rsa_jwk() -> dict:
@@ -148,3 +153,100 @@ def test_expired_token_rejected(monkeypatch):
     with pytest.raises(HTTPException) as e:
         verify_token(token)
     assert e.value.status_code == 401
+
+
+# --------------------------------------------------------------- async path
+# The async verifier is the one used by every request. It must not block the
+# event loop: the original synchronous `httpx.get` stalled the server on each
+# cold request, which browsers saw as intermittent "Failed to fetch".
+
+
+def test_async_verifier_accepts_es256(monkeypatch):
+    key = _ec_private()
+    pub = jwt.algorithms.ECAlgorithm.to_jwk(key.public_key(), as_dict=True)
+    pub.update({"kid": "ec-1", "alg": "ES256", "use": "sig"})
+    monkeypatch.setattr(auth.settings, "jwt_issuer_suffix", "")
+    monkeypatch.setattr(auth.settings, "supabase_url", ISSUER)
+    monkeypatch.setattr(auth, "_JWKS", {"keys": [pub]})
+    monkeypatch.setattr(auth, "_JWKS_FETCHED_AT", time.time())
+
+    token = jwt.encode(
+        {"sub": "async-sub", "iss": ISSUER, "aud": AUDIENCE, "exp": int(time.time()) + 600},
+        key,
+        algorithm="ES256",
+        headers={"kid": "ec-1"},
+    )
+    claims = run(verify_token_async(token))
+    assert claims["sub"] == "async-sub"
+
+
+def test_async_verifier_does_not_block_event_loop(monkeypatch):
+    """A slow JWKS fetch must not stop other tasks from running."""
+
+    class _SlowResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"keys": [_ec_jwk()]}
+
+    class _SlowClient:
+        async def get(self, *a, **k):
+            await asyncio.sleep(0.25)      # simulate network latency
+            return _SlowResponse()
+
+    monkeypatch.setattr(auth, "_HTTP", _SlowClient())
+    monkeypatch.setattr(auth.settings, "jwt_issuer_suffix", "")
+    monkeypatch.setattr(auth.settings, "supabase_url", ISSUER)
+    monkeypatch.setattr(auth, "_JWKS", None)
+    monkeypatch.setattr(auth, "_JWKS_TASK", None)
+
+    ticks = {"n": 0}
+
+    async def ticker():
+        while True:
+            await asyncio.sleep(0.01)
+            ticks["n"] += 1
+
+    async def scenario():
+        t = asyncio.create_task(ticker())
+        await auth._fetch_jwks_async()
+        t.cancel()
+
+    started = time.monotonic()
+    run(scenario())
+    elapsed = time.monotonic() - started
+
+    # If the fetch blocked the loop, the ticker would not have ticked at all.
+    assert ticks["n"] > 5, f"event loop was blocked (ticks={ticks['n']})"
+    assert elapsed < 1.0
+
+
+def test_concurrent_cold_requests_share_one_fetch(monkeypatch):
+    """Single-flight: N concurrent cold requests must trigger one network call."""
+
+    calls = {"n": 0}
+
+    class _Resp:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"keys": [_ec_jwk()]}
+
+    class _Client:
+        async def get(self, *a, **k):
+            calls["n"] += 1
+            await asyncio.sleep(0.05)
+            return _Resp()
+
+    monkeypatch.setattr(auth, "_HTTP", _Client())
+    monkeypatch.setattr(auth, "_JWKS", None)
+    monkeypatch.setattr(auth, "_JWKS_TASK", None)
+    monkeypatch.setattr(auth.settings, "supabase_url", "https://x.supabase.co")
+
+    async def scenario():
+        await asyncio.gather(*[auth._fetch_jwks_async() for _ in range(10)])
+
+    run(scenario())
+    assert calls["n"] == 1, f"expected 1 fetch, got {calls['n']}"

@@ -94,6 +94,21 @@ const en: Dict = {
   common_retry: 'Try again',
   common_weight: 'Weight',
   common_rupees: 'Rs',
+
+  // auth
+  auth_sign_in: 'Sign in',
+  auth_sign_up: 'Create account',
+  auth_email: 'Email',
+  auth_password: 'Password',
+  auth_name: 'Your name',
+  auth_phone: 'Phone',
+  auth_sign_out: 'Sign out',
+  auth_welcome: 'Sign in to start',
+  auth_have_account: 'Already have an account?',
+  auth_need_account: 'New here?',
+  auth_confirm_email: 'Check your email to confirm',
+  auth_not_configured: 'App is not set up yet',
+  auth_error_generic: 'Something went wrong. Try again',
 };
 
 const hi: Dict = {
@@ -162,6 +177,20 @@ const hi: Dict = {
   common_retry: 'फिर कोशिश करें',
   common_weight: 'वज़न',
   common_rupees: 'रु',
+
+  auth_sign_in: 'लॉग इन',
+  auth_sign_up: 'अकाउंट बनाएं',
+  auth_email: 'ईमेल',
+  auth_password: 'पासवर्ड',
+  auth_name: 'आपका नाम',
+  auth_phone: 'फ़ोन',
+  auth_sign_out: 'लॉग आउट',
+  auth_welcome: 'शुरू करने के लिए लॉग इन करें',
+  auth_have_account: 'अकाउंट है? लॉग इन करें',
+  auth_need_account: 'नया हैं? अकाउंट बनाएं',
+  auth_confirm_email: 'पुष्टि के लिए ईमेल देखें',
+  auth_not_configured: 'ऐप अभी तैयार नहीं है',
+  auth_error_generic: 'कुछ गड़बड़ हुई। फिर कोशिश करें',
 };
 
 const mr: Dict = {
@@ -230,6 +259,20 @@ const mr: Dict = {
   common_retry: 'पुन्हा प्रयत्न करा',
   common_weight: 'वजन',
   common_rupees: 'रु',
+
+  auth_sign_in: 'लॉग इन',
+  auth_sign_up: 'खाते तयार करा',
+  auth_email: 'ईमेल',
+  auth_password: 'पासवर्ड',
+  auth_name: 'तुमचे नाव',
+  auth_phone: 'फोन',
+  auth_sign_out: 'लॉग आउट',
+  auth_welcome: 'सुरू करण्यासाठी लॉग इन करा',
+  auth_have_account: 'खाते आहे? लॉग इन करा',
+  auth_need_account: 'नवीन आहात? खाते तयार करा',
+  auth_confirm_email: 'पुष्टीसाठी ईमेल पहा',
+  auth_not_configured: 'अ‍ॅप अजून तयार नाही',
+  auth_error_generic: 'काहीतरी चूक झाली. पुन्हा प्रयत्न करा',
 };
 
 // --- Tamil ---
@@ -299,6 +342,20 @@ const ta: Dict = {
   common_retry: 'மீண்டும் முயற்சி',
   common_weight: 'எடை',
   common_rupees: 'ரூ',
+
+  auth_sign_in: 'உள்நுழை',
+  auth_sign_up: 'கணக்கு உருவாக்கு',
+  auth_email: 'மின்னஞ்சல்',
+  auth_password: 'கடவுச்சொல்',
+  auth_name: 'உங்கள் பெயர்',
+  auth_phone: 'தொலைபேசி',
+  auth_sign_out: 'வெளியேறு',
+  auth_welcome: 'தொடங்க உள்நுழை',
+  auth_have_account: 'கணக்கு உள்ளதா? உள்நுழை',
+  auth_need_account: 'புதியவரா? கணக்கு உருவாக்கு',
+  auth_confirm_email: 'உறுதிப்படுத்த மின்னஞ்சலைப் பார்க்கவும்',
+  auth_not_configured: 'செயலி இன்னும் தயார் ஆகவில்லை',
+  auth_error_generic: 'ஏதோ தவறு நடந்தது. மீண்டும் முயற்சிக்கவும்',
 };
 
 // --- Telugu ---
@@ -368,6 +425,20 @@ const te: Dict = {
   common_retry: 'మళ్ళీ ప్రయత్నించు',
   common_weight: 'బరువు',
   common_rupees: 'రూ',
+
+  auth_sign_in: 'సైన్ ఇన్',
+  auth_sign_up: 'ఖాతా సృష్టించు',
+  auth_email: 'ఇమెయిల్',
+  auth_password: 'పాస్‌వర్డ్',
+  auth_name: 'మీ పేరు',
+  auth_phone: 'ఫోన్',
+  auth_sign_out: 'సైన్ అవుట్',
+  auth_welcome: 'ప్రారంభించడానికి సైన్ ఇన్ చేయండి',
+  auth_have_account: 'ఖాతా ఉందా? సైన్ ఇన్ చేయండి',
+  auth_need_account: 'కొత్తవారా? ఖాతా సృష్టించు',
+  auth_confirm_email: 'నిర్ధారించడానికి ఇమెయిల్ చూడండి',
+  auth_not_configured: 'ఆప్ ఇంకా సిద్ధంగా లేదు',
+  auth_error_generic: 'ఏదో తప్పు జరిగింది. మళ్లీ ప్రయత్నించండి',
 };
 
 // --- Malayalam ---
@@ -437,6 +508,20 @@ const ml: Dict = {
   common_retry: 'വീണ്ടും ശ്രമിക്കുക',
   common_weight: 'ഭാരം',
   common_rupees: 'രൂ',
+
+  auth_sign_in: 'സൈൻ ഇൻ',
+  auth_sign_up: 'അക്കൗണ്ട് ഉണ്ടാക്കുക',
+  auth_email: 'ഇമെയിൽ',
+  auth_password: 'പാസ്‌വേഡ്',
+  auth_name: 'നിങ്ങളുടെ പേര്',
+  auth_phone: 'ഫോൺ',
+  auth_sign_out: 'സൈൻ ഔട്ട്',
+  auth_welcome: 'തുടങ്ങാൻ സൈൻ ഇൻ ചെയ്യുക',
+  auth_have_account: 'അക്കൗണ്ട് ഉണ്ടോ? സൈൻ ഇൻ ചെയ്യുക',
+  auth_need_account: 'പുതിയവരാണോ? അക്കൗണ്ട് ഉണ്ടാക്കുക',
+  auth_confirm_email: 'സ്ഥിരീകരിക്കാൻ ഇമെയിൽ കാണുക',
+  auth_not_configured: 'ആപ്പ് ഇനിയും തയ്യാറല്ല',
+  auth_error_generic: 'എന്തോ കുഴപ്പം സംഭവിച്ചു. വീണ്ടും ശ്രമിക്കുക',
 };
 
 // --- Kannada ---
@@ -506,6 +591,20 @@ const kn: Dict = {
   common_retry: 'ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ',
   common_weight: 'ತೂಕ',
   common_rupees: 'ರೂ',
+
+  auth_sign_in: 'ಸೈನ್ ಇನ್',
+  auth_sign_up: 'ಖಾತೆ ತೆರೆಯಿರಿ',
+  auth_email: 'ಇಮೇಲ್',
+  auth_password: 'ಪಾಸ್‌ವರ್ಡ್',
+  auth_name: 'ನಿಮ್ಮ ಹೆಸರು',
+  auth_phone: 'ಫೋನ್',
+  auth_sign_out: 'ಸೈನ್ ಔಟ್',
+  auth_welcome: 'ಪ್ರಾರಂಭಿಸಲು ಸೈನ್ ಇನ್ ಮಾಡಿ',
+  auth_have_account: 'ಖಾತೆ ಇದೆಯೇ? ಸೈನ್ ಇನ್ ಮಾಡಿ',
+  auth_need_account: 'ಹೊಸಬರೇ? ಖಾತೆ ತೆರೆಯಿರಿ',
+  auth_confirm_email: 'ದೃಢೀಕರಿಸಲು ಇಮೇಲ್ ನೋಡಿ',
+  auth_not_configured: 'ಆ್ಯಪ್ ಇನ್ನೂ ಸಿದ್ಧವಾಗಿಲ್ಲ',
+  auth_error_generic: 'ಏನೋ ತಪ್ಪಾಗಿದೆ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ',
 };
 
 // --- Bengali ---
@@ -575,6 +674,20 @@ const bn: Dict = {
   common_retry: 'আবার চেষ্টা করুন',
   common_weight: 'ওজন',
   common_rupees: 'টাকা',
+
+  auth_sign_in: 'সাইন ইন',
+  auth_sign_up: 'অ্যাকাউন্ট খুলুন',
+  auth_email: 'ইমেইল',
+  auth_password: 'পাসওয়ার্ড',
+  auth_name: 'আপনার নাম',
+  auth_phone: 'ফোন',
+  auth_sign_out: 'সাইন আউট',
+  auth_welcome: 'শুরু করতে সাইন ইন করুন',
+  auth_have_account: 'অ্যাকাউন্ট আছে? সাইন ইন করুন',
+  auth_need_account: 'নতুন? অ্যাকাউন্ট খুলুন',
+  auth_confirm_email: 'নিশ্চিত করতে ইমেইল দেখুন',
+  auth_not_configured: 'অ্যাপ এখনো প্রস্তুত নয়',
+  auth_error_generic: 'কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন',
 };
 
 export const STRINGS: Record<Locale, Dict> = { en, hi, mr, ta, te, ml, kn, bn };
