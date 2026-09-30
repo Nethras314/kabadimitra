@@ -11,7 +11,14 @@ def test_build_upload_signature(monkeypatch):
     assert sig == expected
 
 
-def test_upload_params_503_when_unconfigured(client, override_principal):
+def test_upload_params_503_when_unconfigured(client, override_principal, monkeypatch):
+    from app.config import settings
+
+    # Force the unconfigured state regardless of the local .env.
+    monkeypatch.setattr(settings, "cloudinary_cloud_name", "")
+    monkeypatch.setattr(settings, "cloudinary_api_key", "")
+    monkeypatch.setattr(settings, "cloudinary_api_secret", "")
+
     override_principal(roles=["picker"])
     r = client.get("/api/v1/media/upload-params")
     assert r.status_code == 503

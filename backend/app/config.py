@@ -38,6 +38,8 @@ class Settings(BaseSettings):
     ai_base_url: str = ""
     ai_confidence_threshold: float = 0.80
     ai_review_threshold: float = 0.50
+    ai_timeout_seconds: float = 30.0
+    ai_zdr: bool = True
 
     # Frontend
     frontend_url: str = ""

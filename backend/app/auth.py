@@ -49,24 +49,54 @@ def _fetch_jwks() -> dict:
 def verify_token(token: str) -> dict:
     jwks = _fetch_jwks()
     try:
-        kid = jwt.get_unverified_header(token).get("kid")
+        header = jwt.get_unverified_header(token)
     except jwt.PyJWTError as exc:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token") from exc
 
-    key = None
-    for jwk in jwks.get("keys", []):
-        if jwk.get("kid") == kid:
-            key = jwt.algorithms.RSAAlgorithm.from_jwk(jwk)
-            break
-    if key is None:
+    kid = header.get("kid")
+    alg = header.get("alg", "RS256")
+
+    # Supabase projects sign with either RS256 (RSA) or ES256 (EC / P-256), and
+    # newer projects default to ES256. Key conversion must follow the JWK's own
+    # `kty`, otherwise PyJWT raises "Not an RSA key" and every authenticated
+    # request 500s.
+    jwk = next((k for k in jwks.get("keys", []) if k.get("kid") == kid), None)
+    if jwk is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Unknown signing key")
+
+    kty = jwk.get("kty")
+    try:
+        if kty == "EC":
+            key = jwt.algorithms.ECAlgorithm.from_jwk(jwk)
+            allowed = ["ES256"]
+        elif kty == "RSA":
+            key = jwt.algorithms.RSAAlgorithm.from_jwk(jwk)
+            allowed = ["RS256", "RS512", "PS256"]
+        elif kty == "OKP":
+            key = jwt.algorithms.OKPAlgorithm.from_jwk(jwk)
+            allowed = ["EdDSA"]
+        else:
+            raise HTTPException(
+                status.HTTP_401_UNAUTHORIZED, f"Unsupported key type: {kty}"
+            )
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001 - malformed key
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid signing key") from exc
+
+    # The token's declared algorithm must match the key type, otherwise a token
+    # could be verified with a key meant for a different algorithm.
+    if alg not in allowed:
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED, "Algorithm does not match signing key"
+        )
 
     issuer = f"{settings.supabase_url}{settings.jwt_issuer_suffix}"
     try:
         return jwt.decode(
             token,
             key,
-            algorithms=["RS256"],
+            algorithms=allowed,
             audience=settings.jwt_audience,
             issuer=issuer,
             options={"verify_exp": True},

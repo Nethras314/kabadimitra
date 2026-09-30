@@ -25,7 +25,7 @@ router = APIRouter()
 )
 async def create_recycler(
     body: RecyclerOrganizationCreate,
-    principal: Principal = Depends(require_role("platform_admin", "recycler")),
+    principal: Principal = Depends(require_role("super_admin", "platform_admin", "recycler")),
     conn=Depends(get_db),
 ) -> RecyclerOrganizationOut:
     org_cur = await conn.execute(
@@ -96,13 +96,17 @@ async def create_recycler(
 
 @router.get("/recycler/organizations", response_model=list[RecyclerOrganizationOut])
 async def list_recyclers(
-    principal: Principal = Depends(require_role("platform_admin")),
+    principal: Principal = Depends(require_role("super_admin", "platform_admin")),
     conn=Depends(get_db),
 ) -> list[RecyclerOrganizationOut]:
+    # Organization isolation: a non-admin only ever sees their own organization's
+    # record. Admins (who have no organization_id) see all.
     cur = await conn.execute(
         "SELECT ro.id::text, ro.organization_id::text, o.name, ro.gstin, ro.registration_number "
         "FROM recycler_organizations ro JOIN organizations o ON o.id = ro.organization_id "
-        "ORDER BY o.name"
+        "WHERE (%s::uuid IS NULL OR ro.organization_id = %s::uuid) "
+        "ORDER BY o.name",
+        (principal.organization_id, principal.organization_id),
     )
     rows = await cur.fetchall()
     out = []
@@ -127,7 +131,7 @@ async def list_recyclers(
 async def add_acceptance(
     recycler_id: str,
     body: MaterialAcceptanceCreate,
-    principal: Principal = Depends(require_role("platform_admin")),
+    principal: Principal = Depends(require_role("super_admin", "platform_admin")),
     conn=Depends(get_db),
 ) -> dict:
     await conn.execute(
@@ -140,10 +144,69 @@ async def add_acceptance(
     return {"status": "ok"}
 
 
+# ------------------------------------------------------- admin: recycler ops
+
+
+@router.post("/admin/recyclers/{recycler_id}/pickup")
+async def set_pickup(
+    recycler_id: str,
+    body: dict,
+    principal: Principal = Depends(require_role("super_admin", "platform_admin")),
+    conn=Depends(get_db),
+) -> dict:
+    """Update operational flags that matching depends on (pickup, transport)."""
+    allowed = {
+        "pickup_available", "provides_pickup", "accepts_walkins", "transport_rate_per_km",
+    }
+    updates = {k: v for k, v in body.items() if k in allowed}
+    if not updates:
+        raise HTTPException(
+            status_code=422,
+            detail=f"no updatable fields; expected any of {sorted(allowed)}",
+        )
+    if "transport_rate_per_km" in updates:
+        rate = updates["transport_rate_per_km"]
+        if rate is not None and (float(rate) < 0 or float(rate) > 1000):
+            raise HTTPException(status_code=422, detail="transport_rate_per_km must be 0..1000")
+
+    sets = ", ".join(f"{k} = %s" for k in updates)
+    cur = await conn.execute(
+        f"UPDATE recycler_organizations SET {sets} WHERE id = %s::uuid RETURNING id::text",
+        (*updates.values(), recycler_id),
+    )
+    if await cur.fetchone() is None:
+        raise HTTPException(status_code=404, detail="Recycler not found")
+
+    await record_audit(
+        conn,
+        action="recycler.updated",
+        actor_user_id=principal.user_id,
+        entity_type="recycler_organization",
+        entity_id=recycler_id,
+        after=updates,
+    )
+    return {"id": recycler_id, "updated": list(updates)}
+
+
+@router.get("/admin/material-categories")
+async def list_material_categories(
+    principal: Principal = Depends(get_principal),
+    conn=Depends(get_db),
+) -> list[dict]:
+    """Flat category list for admin pickers (review queues, acceptance)."""
+    cur = await conn.execute(
+        "SELECT id::text, code, name, kind FROM material_categories "
+        "WHERE is_active ORDER BY kind, sort_order"
+    )
+    return [
+        {"id": r[0], "code": r[1], "name": r[2], "kind": r[3]} for r in await cur.fetchall()
+    ]
+
+
 @router.get("/recycler/organizations/{recycler_id}", response_model=RecyclerOrganizationOut)
 async def get_recycler(
     recycler_id: str,
-    principal: Principal = Depends(require_role("platform_admin")),
+    principal: Principal = Depends(require_role("super_admin", "platform_admin")),
     conn=Depends(get_db),
 ) -> RecyclerOrganizationOut:
     cur = await conn.execute(

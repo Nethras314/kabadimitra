@@ -13,13 +13,21 @@ from .routers import (
     admin,
     ai,
     auth,
+    auth_admin,
+    datasets,
+    earnings,
     geo,
+    handover,
     health,
     lots,
     matching,
     media,
+    operations,
+    priceboard,
     pricing,
+    quotes,
     recyclers,
+    safety,
     sync,
     taxonomy,
     transactions,
@@ -53,10 +61,12 @@ app.add_middleware(
     limit=settings.rate_limit,
     window_seconds=settings.rate_limit_window_seconds,
     exempt_paths=["/health", "/health/ready"],
+    redis_url=settings.redis_url or None,
 )
 
 app.include_router(health.router)
 app.include_router(auth.router, prefix="/api/v1")
+app.include_router(auth_admin.router, prefix="/api/v1")
 app.include_router(taxonomy.router, prefix="/api/v1")
 app.include_router(admin.router, prefix="/api/v1")
 app.include_router(lots.router, prefix="/api/v1")
@@ -68,4 +78,11 @@ app.include_router(matching.router, prefix="/api/v1")
 app.include_router(transactions.router, prefix="/api/v1")
 app.include_router(sync.router, prefix="/api/v1")
 app.include_router(geo.router, prefix="/api/v1")
+app.include_router(safety.router, prefix="/api/v1")
+app.include_router(priceboard.router, prefix="/api/v1")
+app.include_router(earnings.router, prefix="/api/v1")
+app.include_router(handover.router, prefix="/api/v1")
+app.include_router(quotes.router, prefix="/api/v1")
+app.include_router(operations.router, prefix="/api/v1")
+app.include_router(datasets.router, prefix="/api/v1")
 

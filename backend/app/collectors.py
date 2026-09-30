@@ -37,6 +37,8 @@ async def resolve_collector(conn, principal: Principal) -> str:
 
 
 async def require_collector(conn, principal: Principal) -> str:
-    if not principal.has_role("picker", "kabadiwala"):
+    # `collector` is the current role code; `picker` is the legacy name kept for
+    # compatibility with older tokens/data.
+    if not principal.has_role("collector", "kabadiwala", "picker"):
         raise HTTPException(status_code=403, detail="Collector role required")
     return await resolve_collector(conn, principal)

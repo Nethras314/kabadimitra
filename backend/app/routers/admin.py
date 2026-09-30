@@ -1,4 +1,4 @@
-"""Admin-only endpoints (RBAC: platform_admin)."""
+"""Admin-only endpoints (RBAC: super_admin / platform_admin)."""
 
 from fastapi import APIRouter, Depends
 
@@ -12,7 +12,7 @@ router = APIRouter()
 
 @router.get("/admin/roles", response_model=list[RoleOut])
 async def list_roles(
-    principal: Principal = Depends(require_role("platform_admin")),
+    principal: Principal = Depends(require_role("super_admin", "platform_admin")),
     conn=Depends(get_db),
 ) -> list[RoleOut]:
     cur = await conn.execute(

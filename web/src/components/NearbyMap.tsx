@@ -4,7 +4,15 @@ import { useEffect, useRef } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-import { NearbyRecycler } from '@/api/client';
+// Shape returned by GET /api/v1/recycler/nearby (kept local so the map does not
+// depend on the API client's surface).
+export interface NearbyRecycler {
+  id: string;
+  name: string;
+  distance_km: number;
+  latitude: number | null;
+  longitude: number | null;
+}
 
 // OpenStreetMap raster tiles — no API key required (attribution included).
 const OSM_STYLE: maplibregl.StyleSpecification = {

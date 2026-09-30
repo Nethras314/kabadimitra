@@ -1,12 +1,21 @@
 # Render Blueprint for the FastAPI backend.
 # Deploy from the repo root; the service builds/runs inside `backend/`.
 services:
+  # Redis backs shared rate-limit counters and background jobs. The backend
+  # falls back to in-process counters if REDIS_URL is unset, so this service can
+  # be removed for a single-instance deployment.
+  - type: redis
+    name: kabadi-mitra-redis
+    ipAllowList: []      # private only; reached from inside Render
+    plan: starter
+
   - type: web
     name: kabadi-mitra-api
     runtime: python
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health/ready
     envVars:
       - key: DATABASE_URL
         sync: false
@@ -20,11 +29,27 @@ services:
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
-      - key: REDIS_URL
-        sync: false
       - key: AI_PROVIDER
         value: none
+      - key: AI_MODEL
+        value: google/gemini-3.5-flash-lite
+      - key: AI_BASE_URL
+        value: https://api.commandcode.ai/provider/v1
       - key: AI_API_KEY
         sync: false
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: kabadi-mitra-redis
+          property: connectionString
+      # Render terminates TLS and forwards the real client address. Without this
+      # the rate limiter would bucket every request as the proxy's own IP.
+      - key: TRUST_PROXY_HEADERS
+        value: 'true'
+      - key: TRUSTED_PROXY_HOPS
+        value: '1'
+      - key: RATE_LIMIT
+        value: '1000'
+      # Set to the deployed web origin, e.g. https://kabadimitra-tau.vercel.app
       - key: BACKEND_CORS_ORIGINS
-        value: https://kabadi-mitra-web.vercel.app
+        sync: false

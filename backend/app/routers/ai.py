@@ -31,6 +31,26 @@ async def _item_for_collector(conn, item_id: str, collector_id: str):
     return row
 
 
+async def _allowed_categories(conn) -> list[dict]:
+    """Taxonomy the model may choose from, so predictions stay valid IDs."""
+    cur = await conn.execute(
+        "SELECT id::text, code, name, kind FROM material_categories WHERE is_active ORDER BY sort_order"
+    )
+    return [
+        {"id": r[0], "code": r[1], "name": r[2], "kind": r[3]} for r in await cur.fetchall()
+    ]
+
+
+async def _image_url(conn, image_id: str | None) -> str | None:
+    if not image_id:
+        return None
+    cur = await conn.execute(
+        "SELECT cloudinary_url FROM material_images WHERE id = %s::uuid", (image_id,)
+    )
+    row = await cur.fetchone()
+    return row[0] if row else None
+
+
 async def _decision_for_collector(conn, decision_id: str, collector_id: str):
     cur = await conn.execute(
         "SELECT d.id::text, d.status, d.lot_item_id::text, "
@@ -60,8 +80,16 @@ async def classify(
     item = await _item_for_collector(conn, item_id, collector_id)
 
     provider = get_provider(settings.ai_provider)
+    image_url = await _image_url(conn, body.image_id if body else None)
     result = await provider.classify(
-        {"id": item[0], "kind": item[1], "material_category_id": item[2], "description": item[3]},
+        {
+            "id": item[0],
+            "kind": item[1],
+            "material_category_id": item[2],
+            "description": item[3],
+            "image_url": image_url,
+            "categories": await _allowed_categories(conn),
+        },
         body.image_id if body else None,
     )
 

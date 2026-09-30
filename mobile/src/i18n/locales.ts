@@ -1,10 +1,590 @@
-// Localization: eight supported languages. English is canonical; Hindi is
-// seeded. Remaining locales (mr, ta, te, ml, kn, bn) are content work.
+// UI localization. English is the fallback; Hindi and Marathi are complete
+// (the spec requires Marathi + Hindi at minimum). Written in short, plain
+// sentences because the target user has limited literacy.
 
-export const SUPPORTED_LOCALES = ['hi', 'en', 'mr', 'ta', 'te', 'ml', 'kn', 'bn'] as const;
+export const SUPPORTED_LOCALES = ['en', 'hi', 'mr', 'ta', 'te', 'ml', 'kn', 'bn'] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
 
-export const collectorCategories: Record<string, Record<string, string>> = {
+export const LOCALE_LABELS: Record<Locale, string> = {
+  en: 'English',
+  hi: 'हिन्दी',
+  mr: 'मराठी',
+  ta: 'தமிழ்',
+  te: 'తెలుగు',
+  ml: 'മലയാളം',
+  kn: 'ಕನ್ನಡ',
+  bn: 'বাংলা',
+};
+
+type Dict = Record<string, string>;
+
+const en: Dict = {
+  // navigation / tabs
+  tab_capture: 'Add',
+  tab_prices: 'Prices',
+  tab_safety: 'Safety',
+  tab_earnings: 'Money',
+
+  // capture
+  capture_title: 'Add material',
+  capture_photo: 'Take photo',
+  capture_choose: 'What is this?',
+  capture_weight: 'How much? (kg)',
+  capture_save: 'Save',
+  capture_saved: 'Saved',
+  capture_next: 'Next',
+  capture_done: 'Done',
+  capture_lot: 'My lot',
+  capture_add_item: 'Add item',
+  capture_empty: 'No items yet',
+
+  // prices
+  prices_title: 'Today\'s price',
+  prices_per_kg: 'per kg',
+  prices_rising: 'Price going up',
+  prices_falling: 'Price going down',
+  prices_stable: 'Price steady',
+  prices_updated: 'Updated',
+  prices_offline: 'Showing saved prices (no internet)',
+
+  // estimate
+  estimate_title: 'Approximate value',
+  estimate_low: 'At least',
+  estimate_mid: 'About',
+  estimate_high: 'At most',
+  estimate_note: 'Final price decided after weighing.',
+
+  // matching
+  match_title: 'Who will buy',
+  match_distance: 'away',
+  match_verified: 'Verified',
+  match_no_buyers: 'No verified buyer near you yet',
+
+  // safety
+  safety_title: 'Safety',
+  safety_do: 'DO',
+  safety_dont: 'NEVER',
+  safety_play: 'Play',
+
+  // handover
+  handover_title: 'Handover',
+  handover_reference: 'Reference number',
+  handover_pending: 'Waiting for recycler to confirm',
+  handover_confirmed: 'Confirmed by recycler',
+  handover_share: 'Show this number',
+
+  // earnings
+  earnings_title: 'My money',
+  earnings_earned: 'Total earned',
+  earnings_paid: 'Paid',
+  earnings_due: 'Still due',
+  earnings_nothing: 'No transactions yet',
+
+  // sync
+  sync_online: 'Online',
+  sync_offline: 'Offline',
+  sync_pending: 'Waiting to send',
+  sync_failed: 'Could not send',
+  sync_now: 'Send now',
+
+  // common
+  common_cancel: 'Cancel',
+  common_ok: 'OK',
+  common_back: 'Back',
+  common_retry: 'Try again',
+  common_weight: 'Weight',
+  common_rupees: 'Rs',
+};
+
+const hi: Dict = {
+  tab_capture: 'जोड़ें',
+  tab_prices: 'भाव',
+  tab_safety: 'सुरक्षा',
+  tab_earnings: 'पैसा',
+
+  capture_title: 'सामान जोड़ें',
+  capture_photo: 'फोटो लें',
+  capture_choose: 'यह क्या है?',
+  capture_weight: 'कितना? (किलो)',
+  capture_save: 'सेव करें',
+  capture_saved: 'सेव हो गया',
+  capture_next: 'आगे',
+  capture_done: 'पूरा',
+  capture_lot: 'मेरा लॉट',
+  capture_add_item: 'सामान जोड़ें',
+  capture_empty: 'अभी कोई सामान नहीं',
+
+  prices_title: 'आज का भाव',
+  prices_per_kg: 'प्रति किलो',
+  prices_rising: 'भाव बढ़ रहा है',
+  prices_falling: 'भाव घट रहा है',
+  prices_stable: 'भाव एक जैसा',
+  prices_updated: 'अपडेट',
+  prices_offline: 'सेव किया हुआ भाव दिख रहा है (नेटवर्क नहीं)',
+
+  estimate_title: 'अनुमानित मूल्य',
+  estimate_low: 'कम से कम',
+  estimate_mid: 'लगभग',
+  estimate_high: 'ज़्यादा से ज़्यादा',
+  estimate_note: 'आख़िरी भाव तौलने के बाद तय होगा।',
+
+  match_title: 'कौन ख़रीदेगा',
+  match_distance: 'दूर',
+  match_verified: 'सत्यापित',
+  match_no_buyers: 'आपके पास अभी कोई सत्यापित ख़रीदार नहीं',
+
+  safety_title: 'सुरक्षा',
+  safety_do: 'करें',
+  safety_dont: 'कभी न करें',
+  safety_play: 'सुनें',
+
+  handover_title: 'हैंडओवर',
+  handover_reference: 'रेफ़रेंस नंबर',
+  handover_pending: 'रीसाइकलर की पुष्टि का इंतज़ार',
+  handover_confirmed: 'रीसाइकलर ने पुष्टि की',
+  handover_share: 'यह नंबर दिखाएँ',
+
+  earnings_title: 'मेरे पैसे',
+  earnings_earned: 'कुल कमाई',
+  earnings_paid: 'मिल गया',
+  earnings_due: 'अभी बाकी',
+  earnings_nothing: 'अभी कोई लेनदेन नहीं',
+
+  sync_online: 'नेटवर्क है',
+  sync_offline: 'नेटवर्क नहीं',
+  sync_pending: 'भेजा जा रहा है',
+  sync_failed: 'नहीं भेजा जा सका',
+  sync_now: 'अभी भेजें',
+
+  common_cancel: 'रद्द करें',
+  common_ok: 'ठीक',
+  common_back: 'वापस',
+  common_retry: 'फिर कोशिश करें',
+  common_weight: 'वज़न',
+  common_rupees: 'रु',
+};
+
+const mr: Dict = {
+  tab_capture: 'जोडा',
+  tab_prices: 'भाव',
+  tab_safety: 'सुरक्षा',
+  tab_earnings: 'पैसा',
+
+  capture_title: 'साहित्य जोडा',
+  capture_photo: 'फोटो घ्या',
+  capture_choose: 'हे काय आहे?',
+  capture_weight: 'किती? (किलो)',
+  capture_save: 'जतन करा',
+  capture_saved: 'जतन झाले',
+  capture_next: 'पुढे',
+  capture_done: 'पूर्ण',
+  capture_lot: 'माझा लॉट',
+  capture_add_item: 'साहित्य जोडा',
+  capture_empty: 'अजून काहीही साहित्य नाही',
+
+  prices_title: 'आजचा भाव',
+  prices_per_kg: 'प्रति किलो',
+  prices_rising: 'भाव वाढत आहे',
+  prices_falling: 'भाव घटत आहे',
+  prices_stable: 'भाव सारखाच',
+  prices_updated: 'अद्ययावत',
+  prices_offline: 'जतन केलेले भाव दाखवत आहेत (नेटवर्क नाही)',
+
+  estimate_title: 'अंदाजे मूल्य',
+  estimate_low: 'किमान',
+  estimate_mid: 'अंदाजे',
+  estimate_high: 'कमाल',
+  estimate_note: 'अंतिम भाव वजन केल्यानंतर ठरतो.',
+
+  match_title: 'कोणी विकेल',
+  match_distance: 'अंतरावर',
+  match_verified: 'पडताळणी केलेले',
+  match_no_buyers: 'तुमच्या जवळ अजून पडताळणी केलेला खरेदीदार नाही',
+
+  safety_title: 'सुरक्षा',
+  safety_do: 'करा',
+  safety_dont: 'कधीही करू नका',
+  safety_play: 'ऐका',
+
+  handover_title: 'हस्तांतरण',
+  handover_reference: 'संदर्भ क्रमांक',
+  handover_pending: 'रीसायकलरच्या पुष्टीची वाट',
+  handover_confirmed: 'रीसायकलरने पुष्टी केली',
+  handover_share: 'हा क्रमांक दाखवा',
+
+  earnings_title: 'माझे पैसे',
+  earnings_earned: 'एकूण कमाई',
+  earnings_paid: 'मिळाले',
+  earnings_due: 'अद्याप बाकी',
+  earnings_nothing: 'अजून कोणताही व्यवहार नाही',
+
+  sync_online: 'नेटवर्क आहे',
+  sync_offline: 'नेटवर्क नाही',
+  sync_pending: 'पाठवत आहे',
+  sync_failed: 'पाठवता आले नाही',
+  sync_now: 'आत्ता पाठवा',
+
+  common_cancel: 'रद्द करा',
+  common_ok: 'ठीक',
+  common_back: 'मागे',
+  common_retry: 'पुन्हा प्रयत्न करा',
+  common_weight: 'वजन',
+  common_rupees: 'रु',
+};
+
+// --- Tamil ---
+const ta: Dict = {
+  tab_capture: 'சேர்',
+  tab_prices: 'விலை',
+  tab_safety: 'பாதுகாப்பு',
+  tab_earnings: 'பணம்',
+
+  capture_title: 'பொருள் சேர்',
+  capture_photo: 'படம் எடு',
+  capture_choose: 'இது என்ன?',
+  capture_weight: 'எவ்வளவு? (கிலோ)',
+  capture_save: 'சேமி',
+  capture_saved: 'சேமிக்கப்பட்டது',
+  capture_next: 'அடுத்து',
+  capture_done: 'முடிந்தது',
+  capture_lot: 'என் தொகுப்பு',
+  capture_add_item: 'பொருள் சேர்',
+  capture_empty: 'இன்னும் பொருள் இல்லை',
+
+  prices_title: 'இன்றைய விலை',
+  prices_per_kg: 'கிலோக்கு',
+  prices_rising: 'விலை ஏறுகிறது',
+  prices_falling: 'விலை இறுகுகிறது',
+  prices_stable: 'விலை அப்படியே',
+  prices_updated: 'புதுப்பிக்கப்பட்டது',
+  prices_offline: 'சேமித்த விலை காட்டப்படுகிறது (இணையம் இல்லை)',
+
+  estimate_title: 'மொத்த மதிப்பு',
+  estimate_low: 'குறைந்தது',
+  estimate_mid: 'சுமார்',
+  estimate_high: 'அதிகம்',
+  estimate_note: 'இறுதி விலை எடை ஆன பின் தீர்மானிக்கப்படும்.',
+
+  match_title: 'யார் வாங்குவார்',
+  match_distance: 'தொலைவில்',
+  match_verified: 'சரிபார்க்கப்பட்டது',
+  match_no_buyers: 'உங்களுக்கு அருகில் சரிபார்க்கப்பட்ட வாங்குபவர் இல்லை',
+
+  safety_title: 'பாதுகாப்பு',
+  safety_do: 'செய்',
+  safety_dont: 'ஒருபோதும் செய்யாதே',
+  safety_play: 'கேட்கவும்',
+
+  handover_title: 'ஒப்படைதல்',
+  handover_reference: 'எண் குறிப்பு',
+  handover_pending: 'ரீசைக்கிளரின் உறுதிப்பை எதிர்பார்க்கிறோம்',
+  handover_confirmed: 'ரீசைக்கிளர் உறுதி செய்தார்',
+  handover_share: 'இந்த எண்ணைக் காட்டு',
+
+  earnings_title: 'என் பணம்',
+  earnings_earned: 'மொத்த வருவாய்',
+  earnings_paid: 'கிடைத்தது',
+  earnings_due: 'இன்னும் தக்கவை',
+  earnings_nothing: 'இன்னும் பரிவர்த்தனை இல்லை',
+
+  sync_online: 'இணையம் உள்ளது',
+  sync_offline: 'இணையம் இல்லை',
+  sync_pending: 'அனுப்பப்படுகிறது',
+  sync_failed: 'அனுப்ப முடியவில்லை',
+  sync_now: 'இப்போது அனுப்பு',
+
+  common_cancel: 'ரத்து',
+  common_ok: 'சரி',
+  common_back: 'பின்',
+  common_retry: 'மீண்டும் முயற்சி',
+  common_weight: 'எடை',
+  common_rupees: 'ரூ',
+};
+
+// --- Telugu ---
+const te: Dict = {
+  tab_capture: 'జోడించు',
+  tab_prices: 'ధరలు',
+  tab_safety: 'సురక్షత',
+  tab_earnings: 'డబ్బు',
+
+  capture_title: 'వస్తువు జోడించు',
+  capture_photo: 'ఫోటో తీయండి',
+  capture_choose: 'ఇది ఏమిటి?',
+  capture_weight: 'ఎంత? (కిలో)',
+  capture_save: 'భద్రపరచు',
+  capture_saved: 'భద్రపరచబడింది',
+  capture_next: 'తర్వాత',
+  capture_done: 'పూర్తి',
+  capture_lot: 'నా బ్యాచ్',
+  capture_add_item: 'వస్తువు జోడించు',
+  capture_empty: 'ఇంకా వస్తువులు లేవు',
+
+  prices_title: 'ఈరోజు ధర',
+  prices_per_kg: 'కిలోకు',
+  prices_rising: 'ధర పెరుగుతోంది',
+  prices_falling: 'ధర తగ్గుతోంది',
+  prices_stable: 'ధర స్థిరంగా',
+  prices_updated: 'నవీకరించబడింది',
+  prices_offline: 'భద్రపరచిన ధరలు చూపుతున్నాయి (ఇంటర్నెట్ లేదు)',
+
+  estimate_title: 'అంచెా విలువ',
+  estimate_low: 'కనీసం',
+  estimate_mid: 'సుమారు',
+  estimate_high: 'గరిష్టం',
+  estimate_note: 'చివరి ధర బరువు తర్వాత నిర్ణయమవుతుంది.',
+
+  match_title: 'ఎవరు కొంటారు',
+  match_distance: 'దూరంలో',
+  match_verified: 'ధృవీకరించబడింది',
+  match_no_buyers: 'మీ దగ్గర ఇంకా ధృవీకరించిన కొనుగాంటి లేరు',
+
+  safety_title: 'సురక్షత',
+  safety_do: 'చేయండి',
+  safety_dont: 'ఎప్పుడూ చేయవద్దు',
+  safety_play: 'వినండి',
+
+  handover_title: 'అప్పింపు',
+  handover_reference: 'సంఖ్య',
+  handover_pending: 'రీసైకిలర్ నిర్ధారణ కోసం వేచి ఉంది',
+  handover_confirmed: 'రీసైకిలర్ నిర్ధారించారు',
+  handover_share: 'ఈ సంఖ్య చూపించు',
+
+  earnings_title: 'నా డబ్బు',
+  earnings_earned: 'మొత్తం సంపాదన',
+  earnings_paid: 'వచ్చినది',
+  earnings_due: 'ఇంకా బాకీ',
+  earnings_nothing: 'ఇంకా లావనాలు లేవు',
+
+  sync_online: 'ఇంటర్నెట్ ఉంది',
+  sync_offline: 'ఇంటర్నెట్ లేదు',
+  sync_pending: 'పంపుతున్నాయి',
+  sync_failed: 'పంపలేకపోయాము',
+  sync_now: 'ఇప్పుడు పంపు',
+
+  common_cancel: 'రద్దు',
+  common_ok: 'సరే',
+  common_back: 'వెనుకకు',
+  common_retry: 'మళ్ళీ ప్రయత్నించు',
+  common_weight: 'బరువు',
+  common_rupees: 'రూ',
+};
+
+// --- Malayalam ---
+const ml: Dict = {
+  tab_capture: 'ചേർക്കുക',
+  tab_prices: 'വില',
+  tab_safety: 'സുരക്ഷ',
+  tab_earnings: 'പണം',
+
+  capture_title: 'സാധനം ചേർക്കുക',
+  capture_photo: 'ഫോട്ടോ എടുക്കുക',
+  capture_choose: 'ഇത് എന്താണ്?',
+  capture_weight: 'എത്ര? (കിലോ)',
+  capture_save: 'സേവ് ചെയ്യുക',
+  capture_saved: 'സേവ് ചെയ്തു',
+  capture_next: 'അടുത്തത്',
+  capture_done: 'പൂർത്തിയായി',
+  capture_lot: 'എന്റെ ലോട്ട്',
+  capture_add_item: 'സാധനം ചേർക്കുക',
+  capture_empty: 'ഇതുവരെ സാധനമില്ല',
+
+  prices_title: 'ഇന്നത്തെ വില',
+  prices_per_kg: 'കിലോയ്ക്ക്',
+  prices_rising: 'വില ഉയർന്നുകൊണ്ടിരിക്കുന്നു',
+  prices_falling: 'വില കുറയുകൊണ്ടിരിക്കുന്നു',
+  prices_stable: 'വില സ്ഥിരം',
+  prices_updated: 'അപ്ഡേറ്റ് ചെയ്തു',
+  prices_offline: 'സേവ് ചെയ്ത വിലകൾ കാണിക്കുന്നു (ഇന്റർനെറ്റ് ഇല്ല)',
+
+  estimate_title: 'ഏകദേശ മൂല്യം',
+  estimate_low: 'കുറഞ്ഞത്',
+  estimate_mid: 'ഏകദേശം',
+  estimate_high: 'കൂടുതൽ',
+  estimate_note: 'അവസാന വില ഭാരം കണക്കാക്കിയുമ്പോൾ തീരുമാനിക്കും.',
+
+  match_title: 'ആര് വാങ്ങും',
+  match_distance: 'അകത്തേക്ക്',
+  match_verified: 'പരിശോധിച്ചത്',
+  match_no_buyers: 'നിങ്ങളുടെ സമീപം പരിശോധിച്ച വാങ്ങുന്നവർ ഇല്ല',
+
+  safety_title: 'സുരക്ഷ',
+  safety_do: 'ചെയ്യുക',
+  safety_dont: 'ഒരിക്കലും ചെയ്യരുത്',
+  safety_play: 'കേൽക്കുക',
+
+  handover_title: 'കൈമാറ്റം',
+  handover_reference: 'അക്ക് നമ്പർ',
+  handover_pending: 'റീസൈക്ലറിന്റെ സ്ഥിരീകരണം കാത്തിരിക്കുന്നു',
+  handover_confirmed: 'റീസൈക്ലർ സ്ഥിരീകരിച്ചു',
+  handover_share: 'ഈ നമ്പർ കാണിക്കുക',
+
+  earnings_title: 'എന്റെ പണം',
+  earnings_earned: 'ആകെ നേട്ടത്',
+  earnings_paid: 'ലഭിച്ചത്',
+  earnings_due: 'ഇനിയും കുടിയേണ്ടത്',
+  earnings_nothing: 'ഇതുവരെ ഇടപെടിടുപ്പകളില്ല',
+
+  sync_online: 'ഇന്റർനെറ്റ് ഉണ്ട്',
+  sync_offline: 'ഇന്റർനെറ്റ് ഇല്ല',
+  sync_pending: 'അയയ്ക്കുന്നു',
+  sync_failed: 'അയയ്ക്കാൻ കഴിയില്ല',
+  sync_now: 'ഇപ്പോൾ അയയ്ക്കുക',
+
+  common_cancel: 'റദ്ദാക്കുക',
+  common_ok: 'ശരി',
+  common_back: 'പിന്നിലേക്ക്',
+  common_retry: 'വീണ്ടും ശ്രമിക്കുക',
+  common_weight: 'ഭാരം',
+  common_rupees: 'രൂ',
+};
+
+// --- Kannada ---
+const kn: Dict = {
+  tab_capture: 'ಸೇರಿಸಿ',
+  tab_prices: 'ಬೆಲೆ',
+  tab_safety: 'ಸುರಕ್ಷತೆ',
+  tab_earnings: 'ಹಣಕಾಸು',
+
+  capture_title: 'ಸಾಮಗ್ರಿ ಸೇರಿಸಿ',
+  capture_photo: 'ಫೋಟೋ ತೆಗೆಯಿರಿ',
+  capture_choose: 'ಇದು ಏನು?',
+  capture_weight: 'ಎಷ್ಟು? (ಕೆಜಿ)',
+  capture_save: 'ಉಳಿಸಿ',
+  capture_saved: 'ಉಳಿಸಲಾಗಿದೆ',
+  capture_next: 'ಮುಂದೆ',
+  capture_done: 'ಮುಗಿಯಿತು',
+  capture_lot: 'ನನ್ನ ಲಾಟ್',
+  capture_add_item: 'ಸಾಮಗ್ರಿ ಸೇರಿಸಿ',
+  capture_empty: 'ಇನ್ನೂ ಸಾಮಗ್ರಿ ಇಲ್ಲ',
+
+  prices_title: 'ಇಂದಿನ ಬೆಲೆ',
+  prices_per_kg: 'ಕೆಜಿಗೆ',
+  prices_rising: 'ಬೆಲೆ ಏರುತ್ತಿದೆ',
+  prices_falling: 'ಬೆಲೆ ಇಳಿಯುತ್ತಿದೆ',
+  prices_stable: 'ಬೆಲೆ ಸ್ಥಿರ',
+  prices_updated: 'ನವೀಕರಿಸಲಾಗಿದೆ',
+  prices_offline: 'ಉಳಿಸಿದ ಬೆಲೆಗಳು ತೋರಿಸುತ್ತಿದೆ (ಇಂಟರ್ನೆಟ್ ಇಲ್ಲ)',
+
+  estimate_title: 'ಅಂದಾಜು ಮೌಲ್ಯ',
+  estimate_low: 'ಕನಿಷ್ಠ',
+  estimate_mid: 'ಸುಮಾರು',
+  estimate_high: 'ಗರಿಷ್ಠ',
+  estimate_note: 'ಕೊನೆಯ ಬೆಲೆ ತೂಕದ ನಂತರ ನಿರ್ಧರಿಸಲ್ಪಡುತ್ತದೆ.',
+
+  match_title: 'ಯಾರು ಕೊಳ್ಳುತ್ತಾರೆ',
+  match_distance: 'ದೂರದಲ್ಲಿ',
+  match_verified: 'ಪರಿಶೀಲಿಸಲಾಗಿದೆ',
+  match_no_buyers: 'ನಿಮ್ಮ ಹತ್ತಿರ ಇನ್ನೂ ಪರಿಶೀಲಿಸಿದ ಖರೀದಾರ ಇಲ್ಲ',
+
+  safety_title: 'ಸುರಕ್ಷತೆ',
+  safety_do: 'ಮಾಡಿ',
+  safety_dont: 'ಎಂದಿಗೂ ಮಾಡಬೇಡಿ',
+  safety_play: 'ಕೇಳಿ',
+
+  handover_title: 'ಹಸ್ತಾನಗಮನ',
+  handover_reference: 'ಸಂಖ್ಯೆ',
+  handover_pending: 'ರೀಸೈಕಲರ್ ದೃಢೀಕರಣಕ್ಕಾಗಿ ಕಾಯುತ್ತಿದೆ',
+  handover_confirmed: 'ರೀಸೈಕಲರ್ ದೃಢೀಕರಿಸಿದರು',
+  handover_share: 'ಈ ಸಂಖ್ಯೆ ತೋರಿಸಿ',
+
+  earnings_title: 'ನನ್ನ ಹಣಕಾಸು',
+  earnings_earned: 'ಒಟ್ಟು ಗಳಿಸಿದ್ದು',
+  earnings_paid: 'ಸಿಕ್ಕಿದ್ದು',
+  earnings_due: 'ಇನ್ನೂ ಬಾಕಿ',
+  earnings_nothing: 'ಇನ್ನೂ ವ್ಯವಹಾರಗಳಿಲ್ಲ',
+
+  sync_online: 'ಇಂಟರ್ನೆಟ್ ಇದೆ',
+  sync_offline: 'ಇಂಟರ್ನೆಟ್ ಇಲ್ಲ',
+  sync_pending: 'ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ',
+  sync_failed: 'ಕಳುಹಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ',
+  sync_now: 'ಈಗ ಕಳುಹಿಸಿ',
+
+  common_cancel: 'ರದ್ದು',
+  common_ok: 'ಸರಿ',
+  common_back: 'ಹಿಂದೆ',
+  common_retry: 'ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ',
+  common_weight: 'ತೂಕ',
+  common_rupees: 'ರೂ',
+};
+
+// --- Bengali ---
+const bn: Dict = {
+  tab_capture: 'যোগ করুন',
+  tab_prices: 'দাম',
+  tab_safety: 'নিরাপত্তা',
+  tab_earnings: 'টাকা',
+
+  capture_title: 'জিনিস যোগ করুন',
+  capture_photo: 'ছবি তুলুন',
+  capture_choose: 'এটি কী?',
+  capture_weight: 'কতটুকু? (কেজি)',
+  capture_save: 'সংরক্ষণ',
+  capture_saved: 'সংরক্ষিত হয়েছে',
+  capture_next: 'পরবর্তী',
+  capture_done: 'সম্পন্ন',
+  capture_lot: 'আমার লট',
+  capture_add_item: 'জিনিস যোগ করুন',
+  capture_empty: 'এখনও কোনো জিনিস নেই',
+
+  prices_title: 'আজকের দাম',
+  prices_per_kg: 'প্রতি কেজি',
+  prices_rising: 'দাম বাড়ছে',
+  prices_falling: 'দাম কমছে',
+  prices_stable: 'দাম একই আছে',
+  prices_updated: 'হালনাগাদ',
+  prices_offline: 'সংরক্ষিত দাম দেখানো হচ্ছে (ইন্টারনেট নেই)',
+
+  estimate_title: 'আনুমানিক মূল্য',
+  estimate_low: 'সর্বনিম্ন',
+  estimate_mid: 'প্রায়',
+  estimate_high: 'সর্বোচ্চ',
+  estimate_note: 'ওজন করার পরেই চূড়ান্ত দাম ঠিক হবে।',
+
+  match_title: 'কে কিনবে',
+  match_distance: 'দূরে',
+  match_verified: 'যাচাইকৃত',
+  match_no_buyers: 'আপনার কাছে এখনও যাচাইকৃত ক্রেতা নেই',
+
+  safety_title: 'নিরাপত্তা',
+  safety_do: 'করুন',
+  safety_dont: 'কখনও করবেন না',
+  safety_play: 'শুনুন',
+
+  handover_title: 'হস্তান্তর',
+  handover_reference: 'রেফারেন্স নম্বর',
+  handover_pending: 'রিসাইক্লারের নিশ্চিতকরণের অপেক্ষায়',
+  handover_confirmed: 'রিসাইক্লার নিশ্চিত করেছেন',
+  handover_share: 'এই নম্বর দেখান',
+
+  earnings_title: 'আমার টাকা',
+  earnings_earned: 'মোট আয়',
+  earnings_paid: 'পেয়েছি',
+  earnings_due: 'এখনও বাকি',
+  earnings_nothing: 'এখনও কোনো লেনদেন নেই',
+
+  sync_online: 'ইন্টারনেট আছে',
+  sync_offline: 'ইন্টারনেট নেই',
+  sync_pending: 'পাঠানো হচ্ছে',
+  sync_failed: 'পাঠানো যায়নি',
+  sync_now: 'এখনই পাঠান',
+
+  common_cancel: 'বাতিল',
+  common_ok: 'ঠিক আছে',
+  common_back: 'পিছনে',
+  common_retry: 'আবার চেষ্টা করুন',
+  common_weight: 'ওজন',
+  common_rupees: 'টাকা',
+};
+
+export const STRINGS: Record<Locale, Dict> = { en, hi, mr, ta, te, ml, kn, bn };
+
+export function t(locale: Locale, key: string): string {
+  return STRINGS[locale]?.[key] ?? STRINGS.en[key] ?? key;
+}
+
+// Material names the collector sees (matches the backend collector_categories).
+export const MATERIAL_LABELS: Record<Locale, Record<string, string>> = {
   en: {
     tv_monitor: 'TV / Monitor',
     computer_laptop: 'Computer / Laptop',
@@ -36,5 +616,101 @@ export const collectorCategories: Record<string, Record<string, string>> = {
     printer: 'प्रिंटर',
     other: 'अन्य',
     dont_know: 'मुझे नहीं पता',
+  },
+  mr: {
+    tv_monitor: 'टीव्ही / मॉनिटर',
+    computer_laptop: 'संगणक / लॅपटॉप',
+    mobile_electronics: 'मोबाइल / इलेक्ट्रॉनिक्स',
+    pcb_board: 'पीसीबी / बोर्ड',
+    cable_wire: 'केबल / तार',
+    battery: 'बॅटरी',
+    motor: 'मोटर',
+    magnet: 'चुंबक',
+    plastic: 'प्लास्टिक',
+    metal: 'धातू',
+    lamp: 'दिवा',
+    printer: 'प्रिंटर',
+    other: 'इतर',
+    dont_know: 'मला माहीत नाही',
+  },
+  ta: {
+    tv_monitor: 'டி.வி. / மானிட்டர்',
+    computer_laptop: 'கம்ப்யூட்டர் / மடிக்கணினி',
+    mobile_electronics: 'மொபைல் / மின்னணு பொருட்கள்',
+    pcb_board: 'பி.சி.பி. / போர்டு',
+    cable_wire: 'கேபிள் / வயர்',
+    battery: 'பேட்டரி',
+    motor: 'மோட்டார்',
+    magnet: 'மென்ட்',
+    plastic: 'பிளாஸ்டிக்',
+    metal: 'உலோகம்',
+    lamp: 'விளக்கு',
+    printer: 'பிரின்டர்',
+    other: 'மற்றவை',
+    dont_know: 'தெரியாது',
+  },
+  te: {
+    tv_monitor: 'టీవీ / మానిటర్',
+    computer_laptop: 'కంప్యూటర్ / లాప్‌టాప్',
+    mobile_electronics: 'మొబైల్ / ఎలక్ట్రానిక్',
+    pcb_board: 'పీసీబీ / బోర్డు',
+    cable_wire: 'కేబుల్ / తీరు',
+    battery: 'బ్యాటరీ',
+    motor: 'మోటార్',
+    magnet: 'అయనం',
+    plastic: 'ప్లాస్టిక్',
+    metal: 'లోహం',
+    lamp: 'దీపం',
+    printer: 'ప్రింటర్',
+    other: 'ఇతర',
+    dont_know: 'తెలియదు',
+  },
+  ml: {
+    tv_monitor: 'ടിവി / മോണിറ്റർ',
+    computer_laptop: 'കമ്പ്യൂട്ടർ / ലാപ്ടോപ്പ്',
+    mobile_electronics: 'മൊബൈൽ / ഇലക്ട്രോണിക്',
+    pcb_board: 'പിസിബി / ബോർഡ്',
+    cable_wire: 'കേബിൾ / വയർ',
+    battery: 'ബാറ്ററി',
+    motor: 'മോട്ടർ',
+    magnet: 'ആകർഷകം',
+    plastic: 'പ്ലാസ്റ്റിക്',
+    metal: 'ലോഹം',
+    lamp: 'വിളക്ക്',
+    printer: 'പ്രിന്റർ',
+    other: 'മറ്റുകൾ',
+    dont_know: 'അറിയില്ല',
+  },
+  kn: {
+    tv_monitor: 'ಟಿವಿ / ಮಾನಿಟರ್',
+    computer_laptop: 'ಕಂಪ್ಯೂಟರ್ / ಲ್ಯಾಪ್‌ಟಾಪ್',
+    mobile_electronics: 'ಮೊಬೈಲ್ / ಎಲೆಕ್ಟ್ರಾನಿಕ್',
+    pcb_board: 'ಪಿಸಿಬಿ / ಬೋರ್ಡ್',
+    cable_wire: 'ಕೇಬಲ್ / ವೈರ್',
+    battery: 'ಬ್ಯಾಟರಿ',
+    motor: 'ಮೋಟಾರ್',
+    magnet: 'ಅಯಸ್ತು',
+    plastic: 'ಪ್ಲಾಸ್ಟಿಕ್',
+    metal: 'ಲೋಹದ',
+    lamp: 'ದೀಪ',
+    printer: 'ಪ್ರಿಂಟರ್',
+    other: 'ಇತರೆ',
+    dont_know: 'ಗೊತ್ತಿಲ್ಲ',
+  },
+  bn: {
+    tv_monitor: 'টিভি / মনিটর',
+    computer_laptop: 'কম্পিউটার / ল্যাপটপ',
+    mobile_electronics: 'মোবাইল / ইলেকট্রনিক্স',
+    pcb_board: 'পিসিবি / বোর্ড',
+    cable_wire: 'কেবল / তার',
+    battery: 'ব্যাটারি',
+    motor: 'মোটর',
+    magnet: 'চুম্বক',
+    plastic: 'প্লাস্টিক',
+    metal: 'ধাতু',
+    lamp: 'বাতি',
+    printer: 'প্রিন্টার',
+    other: 'অন্যান্য',
+    dont_know: 'জানি না',
   },
 };

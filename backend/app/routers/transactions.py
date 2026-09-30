@@ -178,7 +178,53 @@ async def transition(
         before={"status": current},
         after={"status": body.to_status},
     )
+    await _notify_party(conn, transaction_id, "transaction", body.to_status)
     return _txn_out(row)
+
+
+async def _notify_party(conn, transaction_id: str, type_: str, status: str) -> None:
+    """Tell the recycler (if any) and the collector about a status change.
+
+    Best-effort: a notification failure must never block the lifecycle.
+    """
+    try:
+        cur = await conn.execute(
+            "SELECT t.collector_id::text, c.user_id::text, t.recycler_organization_id::text "
+            "FROM transactions t "
+            "JOIN lots l ON l.id = t.lot_id "
+            "JOIN collectors c ON c.id = l.collector_id "
+            "WHERE t.id = %s::uuid",
+            (transaction_id,),
+        )
+        r = await cur.fetchone()
+        if r is None or not r[1]:
+            return
+        title = f"Transaction {status.replace('_', ' ').lower()}"
+        await conn.execute(
+            "INSERT INTO notifications (user_id, type, title, body, channel, entity_type, entity_id) "
+            "VALUES (%s::uuid, %s, %s, %s, 'in_app', 'transaction', %s::uuid)",
+            (r[1], type_, title, f"Status is now {status}", transaction_id),
+        )
+        if r[2]:
+            cur = await conn.execute(
+                "SELECT u.id::text FROM users u "
+                "JOIN user_roles ur ON ur.user_id = u.id "
+                "JOIN roles ro ON ro.id = ur.role_id "
+                "WHERE u.organization_id = "
+                "  (SELECT organization_id FROM recycler_organizations WHERE id = %s::uuid) "
+                "AND ro.code = 'recycler' LIMIT 1",
+                (r[2],),
+            )
+            rec = await cur.fetchone()
+            if rec is not None:
+                await conn.execute(
+                    "INSERT INTO notifications (user_id, type, title, body, channel, "
+                    "entity_type, entity_id) "
+                    "VALUES (%s::uuid, %s, %s, %s, 'in_app', 'transaction', %s::uuid)",
+                    (rec[0], type_, title, f"Status is now {status}", transaction_id),
+                )
+    except Exception:  # noqa: BLE001 - notifications must never break the flow
+        return
 
 
 @router.post(
@@ -203,6 +249,24 @@ async def add_weight(
     )
     row = await cur.fetchone()
     if body.weight_type == "final":
+        # Recompute net earnings now that the authoritative weight is known.
+        # gross = agreed price x final weight; net = gross - transport.
+        # Without this the earnings ledger can only ever show zero.
+        await conn.execute(
+            """
+            UPDATE transactions t
+            SET final_weight_kg = %s,
+                net_earnings = GREATEST(
+                    0,
+                    COALESCE(t.agreed_price_per_kg, 0) * %s
+                    - COALESCE(t.transport_cost, 0)
+                ),
+                expected_weight_kg = COALESCE(t.expected_weight_kg, %s)
+            WHERE t.id = %s::uuid
+            """,
+            (body.weight_kg, body.weight_kg, body.weight_kg, transaction_id),
+        )
+    else:
         await conn.execute(
             "UPDATE transactions SET final_weight_kg = %s WHERE id = %s::uuid",
             (body.weight_kg, transaction_id),

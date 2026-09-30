@@ -20,9 +20,11 @@ def test_admin_roles_forbidden_for_collector(client, override_principal):
 
 
 def test_admin_roles_ok_for_admin(client, override_principal):
-    override_principal(roles=["platform_admin"])
+    override_principal(roles=["super_admin"])
     r = client.get("/api/v1/admin/roles")
     assert r.status_code == 200
     roles = r.json()
     codes = {x["code"] for x in roles}
-    assert codes == {"picker", "kabadiwala", "aggregator", "recycler", "dismantler", "platform_admin"}
+    # Assert the current core roles are exposed (the set grows over time).
+    assert {"collector", "kabadiwala", "aggregator", "recycler", "dismantler"} <= codes
+    assert codes & {"super_admin", "platform_admin"}

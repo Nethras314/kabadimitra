@@ -124,6 +124,21 @@ def query_db(sql: str, params: tuple = ()):
     return asyncio.run(_run())
 
 
+def exec_db(sql: str, params: tuple = ()) -> None:
+    """Run a write/DDL statement against the live DB (autocommit)."""
+
+    async def _run():
+        pool = create_pool()
+        await pool.open()
+        try:
+            async with pool.connection() as conn:
+                await conn.execute(sql, params)
+        finally:
+            await pool.close()
+
+    asyncio.run(_run())
+
+
 def provision_user(user_id: str) -> None:
     async def _run():
         pool = create_pool()
@@ -151,7 +166,29 @@ def cleanup_user(user_id: str) -> None:
                     (user_id,),
                 )
                 await conn.execute(
+                    "DELETE FROM notifications WHERE user_id = %s::uuid", (user_id,)
+                )
+                await conn.execute(
                     "DELETE FROM audit_events WHERE actor_user_id = %s::uuid", (user_id,)
+                )
+                # Roles, corrections and escalations are FKs to the user, so they
+                # must go before the row itself.
+                await conn.execute(
+                    "DELETE FROM ai_corrections WHERE corrected_by_user_id = %s::uuid",
+                    (user_id,),
+                )
+                await conn.execute(
+                    "DELETE FROM ai_escalations WHERE raised_by_user_id = %s::uuid "
+                    "OR reviewed_by_user_id = %s::uuid",
+                    (user_id, user_id),
+                )
+                await conn.execute(
+                    "DELETE FROM user_roles WHERE user_id = %s::uuid", (user_id,)
+                )
+                await conn.execute(
+                    "DELETE FROM disputes WHERE raised_by_user_id = %s::uuid "
+                    "OR assigned_to_user_id = %s::uuid",
+                    (user_id, user_id),
                 )
                 await conn.execute("DELETE FROM users WHERE id = %s::uuid", (user_id,))
         finally:
@@ -212,12 +249,16 @@ def collector_admin_principal():
 
 @pytest.fixture
 def admin_principal():
-    """A platform_admin principal; cleans up KBTEST-* organizations and the user."""
+    """A super_admin principal with a backing `users` row.
+
+    Note: the seeded admin role is `super_admin` (renamed from `platform_admin`
+    in migration 0019). Both are accepted by the RBAC guard for compatibility.
+    """
     user_id = str(uuid.uuid4())
     p = Principal(
         sub=user_id,
         user_id=user_id,
-        roles=["platform_admin"],
+        roles=["super_admin"],
         organization_id=None,
         preferred_locale="en",
     )

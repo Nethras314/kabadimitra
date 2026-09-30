@@ -1,0 +1,10 @@
+{
+  "name": "kabadi-mitra",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix web run build",
+    "start": "npm --prefix web run start",
+    "dev": "npm --prefix web run dev"
+  }
+}

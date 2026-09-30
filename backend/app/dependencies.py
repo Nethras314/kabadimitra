@@ -19,11 +19,11 @@ def require_role(*codes: str):
 def org_scope(principal: Principal) -> tuple[str, list]:
     """Return (where_clause, params) that scopes a query to the principal's org.
 
-    - platform_admin sees everything (no filter).
+    - super_admin / platform_admin sees everything (no filter).
     - a user with an organization sees only their organization's rows.
     - a user with no organization and no admin role sees nothing.
     """
-    if "platform_admin" in principal.roles:
+    if principal.has_role("super_admin", "platform_admin"):
         return "TRUE", []
     if principal.organization_id:
         return "organization_id = %s", [principal.organization_id]
